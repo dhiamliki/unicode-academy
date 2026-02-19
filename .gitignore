@@ -1,0 +1,5 @@
+backend/node_modules/
+unicode-frontend/node_modules/
+backend/uploads/
+backend/startup-check.log
+.idea/

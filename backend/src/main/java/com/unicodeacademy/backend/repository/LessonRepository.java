@@ -1,0 +1,12 @@
+package com.unicodeacademy.backend.repository;
+
+import com.unicodeacademy.backend.model.Lesson;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface LessonRepository extends JpaRepository<Lesson, Long> {
+    List<Lesson> findByCourseIdOrderByOrderIndexAsc(Long courseId);
+
+    java.util.Optional<Lesson> findByCourseIdAndOrderIndex(Long courseId, Integer orderIndex);
+}
