@@ -101,6 +101,37 @@ cd unicode-frontend
 npm install
 npm run dev
 
+-Secure Configuration (Required)
+
+UniCode Academy no longer stores SMTP credentials in source files.
+Set the following environment variables before starting the backend:
+
+SMTP_USERNAME
+SMTP_PASSWORD
+DB_PASSWORD
+JWT_SECRET
+
+Bash (Linux/macOS):
+export SMTP_USERNAME=yourgmail@gmail.com
+export SMTP_PASSWORD=<app_password_here>
+export DB_PASSWORD=<postgres_password>
+export JWT_SECRET=<your_jwt_secret>
+
+PowerShell (Windows):
+$env:SMTP_USERNAME="yourgmail@gmail.com"
+$env:SMTP_PASSWORD="<app_password_here>"
+$env:DB_PASSWORD="<postgres_password>"
+$env:JWT_SECRET="<your_jwt_secret>"
+
+Optional dev profile file:
+Copy `backend/src/main/resources/application-dev.properties.example` to
+`backend/src/main/resources/application-dev.properties` for local overrides.
+This local file is git-ignored.
+
+Deployment note:
+Set the same environment variables in your hosting platform secrets/config
+section. Do not commit credentials to `.env`, `.properties`, or source code.
+
 -Future Improvements
 
 Production deployment

@@ -3,3 +3,9 @@ unicode-frontend/node_modules/
 backend/uploads/
 backend/startup-check.log
 .idea/
+**/application-*.properties
+!backend/src/test/resources/application-test.properties
+**/*.env
+.env
+.env.*
+local-config.yml
