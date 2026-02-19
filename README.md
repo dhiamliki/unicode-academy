@@ -1,153 +1,88 @@
 UniCode Academy
 
-UniCode Academy is a full-stack learning platform designed to provide structured programming education with real-time progress tracking, quizzes, leaderboard ranking, admin management, and secure authentication.
+UniCode Academy is a full-stack e-learning platform built with Spring Boot, React, PostgreSQL, and JWT authentication.
 
-It combines structured courses, practical exercises, and community interaction into a modern learning experience.
+It provides structured programming courses with exercises, quizzes, progress tracking, leaderboard ranking, admin management, real-time chat, and email notifications.
 
--Project Overview
+Tech Stack
+Backend :
 
-UniCode Academy allows users to:
+-Java 21
 
-Enroll in programming courses (C, Java, Python, C++, MySQL, .NET, HTML, CSS, JavaScript)
+-Spring Boot 3
 
-Complete lessons and quizzes
+-Spring Security with JWT
 
-Track learning progress in real time
+-Spring Data JPA
 
-View leaderboard rankings
+-PostgreSQL
 
-Download course attachments
+-STOMP WebSocket (real-time chat)
 
-Participate in live chat
+-SMTP Email integration
 
-Manage account settings
+Frontend :
 
-Admins can:
+-React + TypeScript
 
-Manage users (promote/demote/delete)
+-TailwindCSS
 
-Upload course attachments
+-Axios
 
-Automatically notify users via email when accounts are deleted
+-SockJS + STOMP
 
-Seed initial admin securely at startup
+-Responsive modern UI
 
--Tech Stack
-Backend
+Features
 
-Java
+-JWT authentication (Login / Register)
 
-Spring Boot
+-Role-based access control (USER / ADMIN)
 
-Spring Security (JWT Authentication)
+-Course and lesson management
 
-PostgreSQL
+-Exercises and final quizzes
 
-JPA / Hibernate
+-User progress tracking
 
-BCrypt password hashing
+-Leaderboard system
 
-Gmail SMTP (account notifications)
+-Real-time global and course chat
 
-Frontend
+-Admin panel (user management, role updates, deletion)
 
-React (Vite)
+-Course attachments (admin upload, authenticated download)
 
-TypeScript
+-Email notifications on account actions
 
-TailwindCSS
+Project Structure
+backend/            Spring Boot REST API
+unicode-frontend/   React frontend application
 
-Axios (with auth interceptor)
-
-Responsive AppShell layout
-
--Authentication & Security
-
-JWT-based authentication
-
-Role-based authorization (USER / ADMIN)
-
-Secure password hashing (BCrypt)
-
-Protected admin endpoints
-
-Authenticated file downloads
-
-SMTP-based system notifications
-
--Core Features
-
-✔ Course system
-✔ Lessons + quizzes
-✔ Progress tracking
-✔ Dashboard statistics
-✔ Leaderboard ranking
-✔ Admin panel
-✔ Attachment management
-✔ Email notifications
-✔ Live chat integration
-
--Project Structure
-backend/
-unicode-frontend/
-
--How To Run Locally
+Running Locally
 Backend
 cd backend
 ./mvnw spring-boot:run
+
+
+Required environment variables:
+
+DB_URL=
+DB_USERNAME=
+DB_PASSWORD=
+JWT_SECRET=
+SMTP_USERNAME=
+SMTP_PASSWORD=
 
 Frontend
 cd unicode-frontend
 npm install
 npm run dev
 
--Secure Configuration (Required)
+Purpose
 
-UniCode Academy no longer stores SMTP credentials in source files.
-Set the following environment variables before starting the backend:
+This project was built as a portfolio-level full-stack application demonstrating secure authentication, role-based authorization, real-time communication, clean architecture, and modern UI design.
 
-SMTP_USERNAME
-SMTP_PASSWORD
-DB_PASSWORD
-JWT_SECRET
+-Author :
 
-Bash (Linux/macOS):
-export SMTP_USERNAME=yourgmail@gmail.com
-export SMTP_PASSWORD=<app_password_here>
-export DB_PASSWORD=<postgres_password>
-export JWT_SECRET=<your_jwt_secret>
-
-PowerShell (Windows):
-$env:SMTP_USERNAME="yourgmail@gmail.com"
-$env:SMTP_PASSWORD="<app_password_here>"
-$env:DB_PASSWORD="<postgres_password>"
-$env:JWT_SECRET="<your_jwt_secret>"
-
-Optional dev profile file:
-Copy `backend/src/main/resources/application-dev.properties.example` to
-`backend/src/main/resources/application-dev.properties` for local overrides.
-This local file is git-ignored.
-
-Deployment note:
-Set the same environment variables in your hosting platform secrets/config
-section. Do not commit credentials to `.env`, `.properties`, or source code.
-
--Future Improvements
-
-Production deployment
-
-Domain integration (unicodeacademy.com)
-
-OAuth login (Google/GitHub)
-
-Stripe course payments
-
-Real-time WebSocket chat
-
-Course analytics dashboard
-
--Author
-
-Dhia Mliki
-Full-Stack Developer
-Project: UniCode Academy
+Dhia Mliki Full-Stack Developer Project: UniCode Academy
