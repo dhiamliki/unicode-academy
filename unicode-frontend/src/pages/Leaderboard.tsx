@@ -20,7 +20,7 @@ export default function Leaderboard() {
           setRows(data);
         }
       } catch (err: any) {
-        const msg = err?.response?.data?.message ?? err?.message ?? "Failed to load leaderboard";
+        const msg = err?.response?.data?.message ?? err?.message ?? "Echec du chargement du classement";
         if (!cancelled) {
           setError(msg);
         }
@@ -51,26 +51,26 @@ export default function Leaderboard() {
             <Trophy className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Leaderboard</h2>
-            <p className="text-sm text-slate-600">Top learners ranked by lessons and exercise performance.</p>
+            <h2 className="text-2xl font-semibold text-slate-900">Classement</h2>
+            <p className="text-sm text-slate-600">Meilleurs apprenants classes par lecons et performance aux exercices.</p>
           </div>
         </div>
       </div>
 
-      {loading && <p className="text-sm text-slate-600">Loading leaderboard...</p>}
+      {loading && <p className="text-sm text-slate-600">Chargement du classement...</p>}
       {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {!loading && !error && rows.length === 0 && (
-        <p className="panel p-4 text-sm text-slate-600">No leaderboard data yet.</p>
+        <p className="panel p-4 text-sm text-slate-600">Aucune donnee de classement pour le moment.</p>
       )}
 
       {!loading && !error && rows.length > 0 && (
         <section className="panel overflow-hidden">
           <div className="grid grid-cols-[64px_minmax(220px,1fr)_120px_160px_160px] items-center border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <span>Rank</span>
-            <span>User</span>
+            <span>Rang</span>
+            <span>Utilisateur</span>
             <span>Points</span>
-            <span>Lessons</span>
-            <span>Correct</span>
+            <span>Lecons</span>
+            <span>Correctes</span>
           </div>
 
           <div>

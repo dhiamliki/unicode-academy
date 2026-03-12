@@ -37,29 +37,29 @@ public class CourseAttachmentService {
         ensureCourseExists(courseId);
         return courseAttachmentRepository.findByCourseIdOrderByUploadedAtDesc(courseId)
                 .stream()
-                .map(this::toResponse)
+                .map(attachment -> toResponse(attachment, courseId))
                 .toList();
     }
 
     public CourseAttachmentResponse upload(Long courseId, MultipartFile file) {
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cours introuvable"));
 
         if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier est obligatoire");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "File exceeds 10MB");
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Le fichier depasse 10 Mo");
         }
 
         String originalName = StringUtils.cleanPath(file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
         if (originalName.contains("..")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file name");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nom de fichier invalide");
         }
 
         String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
         if (!isAllowedFile(originalName, contentType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF or image files are allowed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seuls les fichiers PDF ou images sont autorises");
         }
 
         String extension = "";
@@ -75,7 +75,7 @@ public class CourseAttachmentService {
             Path target = safeResolve(storedFileName);
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store file");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible d'enregistrer le fichier");
         }
 
         CourseAttachment attachment = new CourseAttachment();
@@ -85,18 +85,19 @@ public class CourseAttachmentService {
         attachment.setContentType(contentType);
         attachment.setSizeBytes(file.getSize());
 
-        return toResponse(courseAttachmentRepository.save(attachment));
+        CourseAttachment saved = courseAttachmentRepository.save(attachment);
+        return toResponse(saved, course.getId());
     }
 
     public DownloadPayload loadForDownload(Long courseId, Long attachmentId) {
         CourseAttachment attachment = courseAttachmentRepository.findByIdAndCourseId(attachmentId, courseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Piece jointe introuvable"));
 
         try {
             Path target = safeResolve(attachment.getStoredFilename());
             Resource resource = new UrlResource(target.toUri());
             if (!resource.exists()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fichier introuvable");
             }
             return new DownloadPayload(
                     resource,
@@ -104,26 +105,26 @@ public class CourseAttachmentService {
                     attachment.getContentType() != null ? attachment.getContentType() : "application/octet-stream"
             );
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fichier introuvable");
         }
     }
 
     public void delete(Long courseId, Long attachmentId) {
         CourseAttachment attachment = courseAttachmentRepository.findByIdAndCourseId(attachmentId, courseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Piece jointe introuvable"));
 
         courseAttachmentRepository.delete(attachment);
         try {
             Path target = safeResolve(attachment.getStoredFilename());
             Files.deleteIfExists(target);
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete file");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible de supprimer le fichier");
         }
     }
 
     private void ensureCourseExists(Long courseId) {
         if (!courseRepository.existsById(courseId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cours introuvable");
         }
     }
 
@@ -139,15 +140,15 @@ public class CourseAttachmentService {
         Path base = UPLOAD_DIR.toAbsolutePath().normalize();
         Path target = base.resolve(storedFileName).normalize();
         if (!target.startsWith(base)) {
-            throw new IOException("Invalid file path");
+            throw new IOException("Chemin de fichier invalide");
         }
         return target;
     }
 
-    private CourseAttachmentResponse toResponse(CourseAttachment attachment) {
+    private CourseAttachmentResponse toResponse(CourseAttachment attachment, Long courseId) {
         return new CourseAttachmentResponse(
                 attachment.getId(),
-                attachment.getCourse().getId(),
+                courseId,
                 attachment.getOriginalName(),
                 attachment.getSizeBytes() != null ? attachment.getSizeBytes() : 0L,
                 attachment.getUploadedAt()

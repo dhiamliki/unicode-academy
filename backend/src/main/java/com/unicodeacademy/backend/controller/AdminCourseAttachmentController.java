@@ -27,7 +27,7 @@ public class AdminCourseAttachmentController {
                 "/topic/notifications",
                 new RealtimeNotificationResponse(
                         "info",
-                        "Admin uploaded a new attachment: " + uploaded.getOriginalName(),
+                        "Un administrateur a ajoute une nouvelle piece jointe : " + uploaded.getOriginalName(),
                         "COURSE_ATTACHMENT_UPLOADED",
                         courseId,
                         uploaded.getOriginalName(),

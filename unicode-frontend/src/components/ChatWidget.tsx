@@ -371,7 +371,7 @@ export default function ChatWidget() {
   function applySelectedFile(file: File | null) {
     if (!file) return;
     if (file.size > maxFileSizeBytes) {
-      setError("Max file size is 10MB.");
+      setError("La taille maximale du fichier est de 10 Mo.");
       setSelectedFile(null);
       setPreviewFromFile(null);
       if (fileInputRef.current) {
@@ -496,13 +496,13 @@ export default function ChatWidget() {
       const blobUrl = window.URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = message.attachmentName ?? "attachment";
+      link.download = message.attachmentName ?? "piece-jointe";
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch {
-      setError("Download failed.");
+      setError("Echec du telechargement.");
     }
   }
 
@@ -511,7 +511,7 @@ export default function ChatWidget() {
 
     if (selectedFile) {
       if (selectedFile.size > maxFileSizeBytes) {
-        setError("Max file size is 10MB.");
+        setError("La taille maximale du fichier est de 10 Mo.");
         return;
       }
 
@@ -541,7 +541,7 @@ export default function ChatWidget() {
             ? maybeErr.response?.data?.message
             : maybeErr.response?.data) ??
           maybeErr.message ??
-          "Upload failed.";
+          "Echec de l'envoi.";
         setError(msg);
       }
       return;
@@ -600,20 +600,25 @@ export default function ChatWidget() {
           position: "fixed",
           right: 20,
           bottom: 20,
-          width: 56,
-          height: 56,
-          borderRadius: "50%",
+          minHeight: 48,
+          padding: "0 16px",
+          borderRadius: 999,
           border: "none",
           background: "#1f2937",
           color: "#fff",
-          fontSize: 14,
+          fontSize: 13,
+          fontWeight: 600,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          whiteSpace: "nowrap",
           cursor: "pointer",
           boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
           zIndex: 1000,
         }}
-        aria-label="Open live chat"
+        aria-label="Ouvrir la discussion en direct"
       >
-        Chat
+        Discussion
         {unread > 0 && (
           <span
             style={{
@@ -672,7 +677,7 @@ export default function ChatWidget() {
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                Live Chat
+                Discussion en direct
                 <span
                   style={{
                     width: 8,
@@ -696,11 +701,11 @@ export default function ChatWidget() {
                     fontSize: 12,
                   }}
                 >
-                  <option value="global">Global</option>
-                  <option value={`course:${currentCourseId}`}>Course chat</option>
+                  <option value="global">Salon general</option>
+                  <option value={`course:${currentCourseId}`}>Discussion du cours</option>
                 </select>
               ) : (
-                <span style={{ fontSize: 12, color: "#d1d5db" }}>Room: Global</span>
+                <span style={{ fontSize: 12, color: "#d1d5db" }}>Salon : general</span>
               )}
             </div>
             <button
@@ -712,7 +717,7 @@ export default function ChatWidget() {
                 cursor: "pointer",
                 fontSize: 16,
               }}
-              aria-label="Close chat"
+              aria-label="Fermer la discussion"
             >
               X
             </button>
@@ -732,12 +737,12 @@ export default function ChatWidget() {
           >
             {historyLoading && (
               <div style={{ color: "#64748b", fontSize: 13 }}>
-                Loading history...
+                Chargement de l'historique...
               </div>
             )}
             {!historyLoading && messages.length === 0 && (
               <div style={{ color: "#64748b", fontSize: 13 }}>
-                No messages yet.
+                Aucun message pour le moment.
               </div>
             )}
             {messages.map((m) => {
@@ -771,7 +776,7 @@ export default function ChatWidget() {
                     >
                       <strong>
                         {m.username}
-                        {showAdminBadge ? " | admin" : ""}
+                        {showAdminBadge ? " | administrateur" : ""}
                       </strong>{" "}
                       - {formatTime(m.createdAt)}
                     </div>
@@ -802,7 +807,7 @@ export default function ChatWidget() {
                         color: isOwnMessage ? "#dbeafe" : "#1d4ed8",
                       }}
                     >
-                      Attachment: {m.attachmentName ?? "file"}
+                      Piece jointe : {m.attachmentName ?? "fichier"}
                     </button>
                   )}
                 </div>
@@ -831,7 +836,7 @@ export default function ChatWidget() {
               {previewUrl && (
                 <img
                   src={previewUrl}
-                  alt="Preview"
+                  alt="Apercu"
                   style={{
                     width: "100%",
                     maxHeight: 140,
@@ -862,7 +867,7 @@ export default function ChatWidget() {
                       cursor: "pointer",
                     }}
                   >
-                    Remove
+                    Retirer
                   </button>
                 </div>
               )}
@@ -882,7 +887,7 @@ export default function ChatWidget() {
               }}
             >
               <p style={{ margin: 0, fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-                Mention someone
+                Mentionner quelqu'un
               </p>
               {mentionOptions.map((name, idx) => {
                 const active = idx === mentionSelectedIndex;
@@ -925,7 +930,7 @@ export default function ChatWidget() {
               onChange={handleInputChange}
               onClick={handleInputCursorChange}
               onKeyUp={handleInputCursorChange}
-              placeholder={isDragging ? "Drop file to attach" : "Type a message..."}
+              placeholder={isDragging ? "Deposez un fichier a joindre" : "Ecrire un message..."}
               onKeyDown={handleInputKeyDown}
               style={{
                 flex: 1,
@@ -955,8 +960,8 @@ export default function ChatWidget() {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Attach file"
-              title="Attach file"
+              aria-label="Joindre un fichier"
+              title="Joindre un fichier"
             >
               <svg
                 width="18"
@@ -986,7 +991,7 @@ export default function ChatWidget() {
                 fontSize: 14,
               }}
             >
-              Send
+              Envoyer
             </button>
           </div>
         </div>

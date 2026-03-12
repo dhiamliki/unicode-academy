@@ -22,20 +22,22 @@ import { useNotifications } from "../notifications/NotificationsContext";
 import { getCurrentUser, type CurrentUserDto } from "../api/users";
 import { languageShortcuts } from "../utils/languageVisuals";
 
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8081").replace(/\/$/, "");
+
 const sidebarLinks = [
-  { to: "/dashboard", label: "Dashboard", icon: Home },
-  { to: "/search", label: "Search", icon: Search },
-  { to: "/courses", label: "Courses", icon: BookOpenText },
-  { to: "/attachments", label: "Attachments", icon: Paperclip },
-  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/profile", label: "Profile", icon: UserRound },
+  { to: "/dashboard", label: "Tableau de bord", icon: Home },
+  { to: "/search", label: "Recherche", icon: Search },
+  { to: "/courses", label: "Cours", icon: BookOpenText },
+  { to: "/attachments", label: "Pieces jointes", icon: Paperclip },
+  { to: "/leaderboard", label: "Classement", icon: Trophy },
+  { to: "/profile", label: "Profil", icon: UserRound },
 ];
 
 const topLinks = [
-  { to: "/search", label: "Search" },
-  { to: "/courses", label: "Courses" },
-  { to: "/leaderboard", label: "Leaderboard" },
-  { to: "/profile", label: "Profile" },
+  { to: "/search", label: "Recherche" },
+  { to: "/courses", label: "Cours" },
+  { to: "/leaderboard", label: "Classement" },
+  { to: "/profile", label: "Profil" },
 ];
 
 function formatTime(iso: string) {
@@ -55,6 +57,7 @@ export default function AppShell({ children }: AppShellProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUserDto | null>(null);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
 
   const profileRef = useRef<HTMLDivElement | null>(null);
   const notifRef = useRef<HTMLDivElement | null>(null);
@@ -84,7 +87,7 @@ export default function AppShell({ children }: AppShellProps) {
   const navItems = useMemo(
     () =>
       isAdmin
-        ? [...sidebarLinks, { to: "/admin/users", label: "Admin", icon: Shield }]
+        ? [...sidebarLinks, { to: "/admin/users", label: "Administration", icon: Shield }]
         : sidebarLinks,
     [isAdmin]
   );
@@ -92,27 +95,31 @@ export default function AppShell({ children }: AppShellProps) {
   const topNavItems = useMemo(
     () =>
       isAdmin
-        ? [...topLinks, { to: "/admin/users", label: "Admin" }]
+        ? [...topLinks, { to: "/admin/users", label: "Administration" }]
         : topLinks,
     [isAdmin]
   );
 
   const pageTitle = useMemo(() => {
-    if (location.pathname.startsWith("/dashboard")) return "Dashboard";
-    if (location.pathname.startsWith("/search")) return "Search";
-    if (location.pathname.startsWith("/courses")) return "Courses";
-    if (location.pathname.startsWith("/attachments")) return "Attachments";
-    if (location.pathname.startsWith("/lessons")) return "Lesson";
-    if (location.pathname.startsWith("/leaderboard")) return "Leaderboard";
-    if (location.pathname.startsWith("/profile")) return "Profile";
-    if (location.pathname.startsWith("/account")) return "Account";
-    if (location.pathname.startsWith("/admin")) return "Admin";
+    if (location.pathname.startsWith("/dashboard")) return "Tableau de bord";
+    if (location.pathname.startsWith("/search")) return "Recherche";
+    if (location.pathname.startsWith("/courses")) return "Cours";
+    if (location.pathname.startsWith("/attachments")) return "Pieces jointes";
+    if (location.pathname.startsWith("/lessons")) return "Lecon";
+    if (location.pathname.startsWith("/leaderboard")) return "Classement";
+    if (location.pathname.startsWith("/profile")) return "Profil";
+    if (location.pathname.startsWith("/account")) return "Compte";
+    if (location.pathname.startsWith("/admin")) return "Administration";
     return "UniCode";
   }, [location.pathname]);
 
   const activeLanguageFilter = useMemo(
     () => new URLSearchParams(location.search).get("language")?.toLowerCase() ?? "",
     [location.search]
+  );
+  const avatarUrl = useMemo(
+    () => resolveAssetUrl(currentUser?.avatarUrl),
+    [currentUser?.avatarUrl]
   );
 
   useEffect(() => {
@@ -178,6 +185,10 @@ export default function AppShell({ children }: AppShellProps) {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [avatarUrl]);
+
   function logout() {
     clearAuth();
     navigate("/login", { replace: true });
@@ -204,14 +215,14 @@ export default function AppShell({ children }: AppShellProps) {
             </span>
             <div>
               <p className="text-sm font-semibold tracking-wide text-slate-100">UniCode</p>
-              <p className="text-xs text-slate-400/90">Learning Platform</p>
+              <p className="text-xs text-slate-400/90">Plateforme d'apprentissage</p>
             </div>
           </Link>
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
             className="rounded-lg p-1 text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-100 lg:hidden"
-            aria-label="Close sidebar"
+            aria-label="Fermer la barre laterale"
           >
             <X className="h-5 w-5" />
           </button>
@@ -249,7 +260,7 @@ export default function AppShell({ children }: AppShellProps) {
         <div className="mt-8">
           <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             <Languages className="h-4 w-4" />
-            Language Shortcuts
+            Raccourcis langues
           </div>
           <div className="space-y-2">
             {languageShortcuts.map((language) => {
@@ -273,7 +284,7 @@ export default function AppShell({ children }: AppShellProps) {
                   >
                     <img
                       src={language.image}
-                      alt={`${language.label} logo`}
+                      alt={`Logo ${language.label}`}
                       loading="lazy"
                       className="h-4 w-4 object-contain"
                     />
@@ -288,28 +299,28 @@ export default function AppShell({ children }: AppShellProps) {
         {isAdmin && (
           <div className="mt-8 rounded-xl border border-teal-400/45 bg-teal-500/[0.11] p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-teal-200">
-              Admin Workspace
+              Espace admin
             </p>
             <p className="mt-1 text-xs text-teal-100/90">
-              Manage users and upload course attachments.
+              Gerer les utilisateurs et televerser les pieces jointes des cours.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Link to="/admin/users" className="btn-primary w-full justify-center gap-1.5 px-3 py-1.5 text-xs">
                 <Shield className="h-3.5 w-3.5" />
-                Users
+                Utilisateurs
               </Link>
               <Link to="/attachments" className="btn-secondary w-full justify-center gap-1.5 px-3 py-1.5 text-xs !border-white/25 !bg-white/[0.08] !text-white hover:!bg-white/[0.12]">
                 <Upload className="h-3.5 w-3.5" />
-                Files
+                Fichiers
               </Link>
             </div>
           </div>
         )}
 
         <div className="mt-auto rounded-xl border border-white/[0.11] bg-white/[0.05] p-3">
-          <p className="text-xs text-slate-400">Signed in as</p>
+          <p className="text-xs text-slate-400">Connecte en tant que</p>
           <p className="truncate text-sm font-semibold text-slate-100">
-            {currentUser?.username ?? "User"}
+            {currentUser?.username ?? "Utilisateur"}
           </p>
         </div>
       </aside>
@@ -322,12 +333,12 @@ export default function AppShell({ children }: AppShellProps) {
                 type="button"
                 onClick={() => setSidebarOpen(true)}
                 className="rounded-lg p-2 text-[var(--color-text-muted)] transition hover:bg-teal-50 hover:text-[var(--color-primary-dark)] lg:hidden"
-                aria-label="Open sidebar"
+                aria-label="Ouvrir la barre laterale"
               >
                 <Menu className="h-5 w-5" />
               </button>
               <div>
-                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Workspace</p>
+                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Espace</p>
                 <h1 className="text-base font-semibold text-[var(--color-text-primary)]">{pageTitle}</h1>
               </div>
             </div>
@@ -382,7 +393,7 @@ export default function AppShell({ children }: AppShellProps) {
 
                     {notifications.length === 0 ? (
                       <p className="rounded-lg bg-slate-50 p-3 text-sm text-[var(--color-text-muted)]">
-                        No notifications yet.
+                        Aucune notification pour le moment.
                       </p>
                     ) : (
                       <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
@@ -424,7 +435,7 @@ export default function AppShell({ children }: AppShellProps) {
                                 type="button"
                                 onClick={() => deleteMany([notification.id])}
                                 className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                                aria-label="Delete notification"
+                                aria-label="Supprimer la notification"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -436,10 +447,10 @@ export default function AppShell({ children }: AppShellProps) {
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" onClick={markAllRead} className="btn-secondary px-3 py-1.5 text-xs">
-                        Mark all read
+                        Tout marquer lu
                       </button>
                       <button type="button" onClick={clearAll} className="btn-secondary px-3 py-1.5 text-xs">
-                        Clear all
+                        Tout effacer
                       </button>
                       <button
                         type="button"
@@ -447,7 +458,7 @@ export default function AppShell({ children }: AppShellProps) {
                         className="btn-secondary px-3 py-1.5 text-xs"
                         disabled={selectedIds.length === 0}
                       >
-                        Delete selected
+                        Supprimer la selection
                       </button>
                     </div>
                   </div>
@@ -463,11 +474,20 @@ export default function AppShell({ children }: AppShellProps) {
                   }}
                   className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
                 >
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-xs font-semibold text-teal-700">
-                    {(currentUser?.username ?? "U").slice(0, 1).toUpperCase()}
-                  </span>
+                  {avatarUrl && !avatarLoadFailed ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar du profil"
+                      className="h-7 w-7 rounded-full border border-slate-200 object-cover"
+                      onError={() => setAvatarLoadFailed(true)}
+                    />
+                  ) : (
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-xs font-semibold text-teal-700">
+                      {(currentUser?.username ?? "U").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
                   <span className="hidden max-w-24 truncate text-sm font-medium sm:inline">
-                    {currentUser?.username ?? "Profile"}
+                    {currentUser?.username ?? "Profil"}
                   </span>
                   <ChevronDown className="h-4 w-4 text-slate-500" />
                 </button>
@@ -479,14 +499,14 @@ export default function AppShell({ children }: AppShellProps) {
                       className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
                     >
                       <UserRound className="h-4 w-4" />
-                      Profile
+                      Profil
                     </Link>
                     <Link
                       to="/account"
                       className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
                     >
                       <Settings className="h-4 w-4" />
-                      Account
+                      Compte
                     </Link>
                     <button
                       type="button"
@@ -494,7 +514,7 @@ export default function AppShell({ children }: AppShellProps) {
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50"
                     >
                       <LogOut className="h-4 w-4" />
-                      Logout
+                      Deconnexion
                     </button>
                   </div>
                 )}
@@ -507,4 +527,15 @@ export default function AppShell({ children }: AppShellProps) {
       </div>
     </div>
   );
+}
+
+function resolveAssetUrl(url: string | null | undefined) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("/")) {
+    return `${apiBaseUrl}${url}`;
+  }
+  return `${apiBaseUrl}/${url}`;
 }

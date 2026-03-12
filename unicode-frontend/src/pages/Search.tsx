@@ -53,7 +53,7 @@ export default function SearchPage() {
         }
       } catch (err: any) {
         const msg =
-          err?.response?.data?.message ?? err?.message ?? "Failed to load courses";
+          err?.response?.data?.message ?? err?.message ?? "Echec du chargement des cours";
         if (!cancelled) {
           setError(msg);
         }
@@ -116,22 +116,22 @@ export default function SearchPage() {
       <section className="panel p-6">
         <div className="flex items-center gap-2">
           <Search className="h-5 w-5 text-teal-600" />
-          <h2 className="text-2xl font-semibold text-slate-900">Search</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Recherche</h2>
         </div>
         <p className="mt-2 text-sm text-slate-600">
-          Search by course title or programming language.
+          Recherchez par titre de cours ou langage de programmation.
         </p>
 
         <form onSubmit={onSubmit} className="mt-4 flex flex-wrap gap-2">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Try JavaScript, C++, SQL, HTML..."
+            placeholder="Essayez JavaScript, C++, SQL, HTML..."
             className="field max-w-xl"
           />
           <button type="submit" className="btn-primary gap-2">
             <Search className="h-4 w-4" />
-            Search
+            Rechercher
           </button>
         </form>
 
@@ -149,7 +149,7 @@ export default function SearchPage() {
         </div>
       </section>
 
-      {loading && <p className="text-sm text-slate-600">Loading courses...</p>}
+      {loading && <p className="text-sm text-slate-600">Chargement des cours...</p>}
       {error && (
         <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
@@ -159,18 +159,18 @@ export default function SearchPage() {
       {!loading && !error && (
         <section className="space-y-3">
           <p className="text-sm text-slate-600">
-            {filteredCourses.length} result{filteredCourses.length === 1 ? "" : "s"}
+            {filteredCourses.length} resultat{filteredCourses.length === 1 ? "" : "s"}
           </p>
 
           {filteredCourses.length === 0 ? (
             <div className="panel p-5 text-sm text-slate-600">
-              No course found for this search.
+              Aucun cours trouve pour cette recherche.
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredCourses.map((course) => {
                 const code = (course.languageCode ?? "").toLowerCase();
-                const language = languageDisplay[code] ?? (course.languageCode ?? "Unknown");
+                const language = languageDisplay[code] ?? (course.languageCode ?? "Inconnu");
 
                 return (
                   <Link

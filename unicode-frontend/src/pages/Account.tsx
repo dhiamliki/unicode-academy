@@ -111,7 +111,7 @@ export default function Account() {
           </span>
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">Mon compte</h2>
-            <p className="text-sm text-slate-600">Manage password and account security settings.</p>
+            <p className="text-sm text-slate-600">Gerez le mot de passe et les parametres de securite du compte.</p>
           </div>
         </div>
       </div>

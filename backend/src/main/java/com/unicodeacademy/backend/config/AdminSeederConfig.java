@@ -43,7 +43,7 @@ public class AdminSeederConfig {
             user.setRole(User.Role.ADMIN);
 
             userRepository.save(user);
-            log.info("Admin seeded: {}", normalizedEmail);
+            log.info("Administrateur initialise : {}", normalizedEmail);
         };
     }
 }

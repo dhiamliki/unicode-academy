@@ -40,18 +40,18 @@ public class AccountTerminationEmailService {
             return;
         }
         if (mailHost == null || mailHost.isBlank()) {
-            log.warn("Skipped account termination email: spring.mail.host is not configured (set SMTP_HOST or spring.mail.host)");
+            log.warn("E-mail de suppression de compte ignore: spring.mail.host n'est pas configure (definir SMTP_HOST ou spring.mail.host)");
             return;
         }
 
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
-            log.warn("Skipped account termination email: JavaMailSender is not available");
+            log.warn("E-mail de suppression de compte ignore: JavaMailSender indisponible");
             return;
         }
 
         String normalizedEmail = recipientEmail.trim();
-        String displayName = username != null && !username.isBlank() ? username.trim() : "there";
+        String displayName = username != null && !username.isBlank() ? username.trim() : "utilisateur";
         String escapedDisplayName = HtmlUtils.htmlEscape(displayName);
 
         String htmlContent = """
@@ -63,20 +63,20 @@ public class AccountTerminationEmailService {
                     </h2>
                 
                     <p style="font-size:16px; color:#1f2937;">
-                      Hello {{username}},
+                      Bonjour {{username}},
                     </p>
                 
                     <p style="font-size:15px; color:#374151; line-height:1.6;">
-                      Your UniCode account has been deactivated by an administrator.
+                      Votre compte UniCode a ete desactive par un administrateur.
                     </p>
                 
                     <p style="font-size:15px; color:#374151; line-height:1.6;">
-                      If you believe this was done in error, please contact our support team.
+                      Si vous pensez qu'il s'agit d'une erreur, contactez notre equipe de support.
                     </p>
                 
                     <div style="margin-top:30px; padding-top:20px; border-top:1px solid #e5e7eb;">
                       <p style="font-size:13px; color:#6b7280;">
-                        This is an automated message from UniCode Academy.
+                        Ceci est un message automatique de UniCode Academy.
                       </p>
                     </div>
                 
@@ -91,13 +91,13 @@ public class AccountTerminationEmailService {
             if (fromAddress != null && !fromAddress.isBlank()) {
                 helper.setFrom(fromAddress.trim());
             }
-            helper.setSubject("Your UniCode account has been deactivated");
+            helper.setSubject("Votre compte UniCode a ete desactive");
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            log.info("Account termination email sent to {}", normalizedEmail);
+            log.info("E-mail de suppression de compte envoye a {}", normalizedEmail);
         } catch (MessagingException | MailException ex) {
-            log.error("Failed to send account termination email to {}", normalizedEmail, ex);
+            log.error("Impossible d'envoyer l'e-mail de suppression de compte a {}", normalizedEmail, ex);
         }
     }
 }

@@ -22,44 +22,40 @@ export default function Register() {
     setSuccess(null);
 
     if (!username.trim()) {
-      setError("Username is required.");
+      setError("Le nom d'utilisateur est obligatoire.");
       return;
     }
     if (!email.trim()) {
-      setError("Email is required.");
+      setError("L'email est obligatoire.");
       return;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError("Le mot de passe doit contenir au moins 6 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Les mots de passe ne correspondent pas.");
       return;
     }
 
     setLoading(true);
     try {
-      const registerMessage = await registerApi({
+      await registerApi({
         username: username.trim(),
         email: email.trim(),
         password,
       });
 
-      if (!registerMessage.toLowerCase().includes("success")) {
-        throw new Error(registerMessage || "Registration failed");
-      }
-
       const { token } = await loginApi({ email: email.trim(), password });
       setToken(token);
-      setSuccess("Account created. Redirecting...");
+      setSuccess("Compte cree. Redirection...");
       nav("/dashboard", { replace: true });
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ??
         (typeof err?.response?.data === "string" ? err.response.data : null) ??
         err?.message ??
-        "Registration failed";
+        "Inscription echouee";
       setError(msg);
     } finally {
       setLoading(false);
@@ -74,28 +70,29 @@ export default function Register() {
             <span className="public-brand-mark">U</span>
             <span style={{ color: "#ffffff" }}>UniCode</span>
           </Link>
-          <h1>Create your account and start learning today.</h1>
+          <h1>Creez votre compte et commencez a apprendre aujourd'hui.</h1>
           <p>
-            Access language tracks, course attachments, quizzes, and live chat from a unified dashboard.
+            Accedez aux parcours de langage, aux pieces jointes des cours, aux quiz et au chat en
+            direct depuis un tableau de bord unifie.
           </p>
           <ul>
-            <li>Track lesson and quiz progress automatically</li>
-            <li>Compete on leaderboard with real scoring</li>
-            <li>Download course resources from one place</li>
+            <li>Suivez automatiquement la progression des lecons et quiz</li>
+            <li>Defiez les autres dans un classement a score reel</li>
+            <li>Telechargez les ressources de cours au meme endroit</li>
           </ul>
         </section>
 
         <section className="auth-form-card">
-          <p className="landing-kicker" style={{ color: "#0f766e" }}>Register</p>
-          <h2 className="auth-form-title">Create your UniCode account</h2>
+          <p className="landing-kicker" style={{ color: "#0f766e" }}>Inscription</p>
+          <h2 className="auth-form-title">Creer votre compte UniCode</h2>
 
           <form onSubmit={onSubmit} className="auth-form">
             <div>
-              <label className="auth-label">Username</label>
+              <label className="auth-label">Nom d'utilisateur</label>
               <input
                 className="auth-input"
                 type="text"
-                placeholder="Your username"
+                placeholder="Votre nom d'utilisateur"
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 required
@@ -103,11 +100,11 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="auth-label">Email</label>
+              <label className="auth-label">E-mail</label>
               <input
                 className="auth-input"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -115,12 +112,12 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="auth-label">Password</label>
+              <label className="auth-label">Mot de passe</label>
               <div className="auth-input-wrap">
                 <input
                   className="auth-input has-trailing-action"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create password"
+                  placeholder="Creez un mot de passe"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
@@ -130,17 +127,17 @@ export default function Register() {
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? "Masquer" : "Afficher"}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="auth-label">Confirm password</label>
+              <label className="auth-label">Confirmer le mot de passe</label>
               <input
                 className="auth-input"
                 type={showPassword ? "text" : "password"}
-                placeholder="Confirm password"
+                placeholder="Confirmez le mot de passe"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 required
@@ -148,7 +145,7 @@ export default function Register() {
             </div>
 
             <button className="auth-submit" type="submit" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Creation du compte..." : "Creer le compte"}
             </button>
 
             {error && <p className="auth-error">{error}</p>}
@@ -156,7 +153,7 @@ export default function Register() {
           </form>
 
           <p className="auth-footer">
-            Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
+            Vous avez deja un compte ? <Link to="/login" className="auth-link">Se connecter</Link>
           </p>
         </section>
       </div>

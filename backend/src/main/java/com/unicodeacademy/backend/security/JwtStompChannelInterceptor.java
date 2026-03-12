@@ -39,7 +39,7 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
             }
 
             if (authHeader == null || authHeader.isBlank()) {
-                throw new MessagingException("Missing Authorization header");
+                throw new MessagingException("En-tete Authorization manquant");
             }
 
             String token = authHeader.startsWith("Bearer ")
@@ -50,12 +50,12 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
             try {
                 email = jwtService.extractEmail(token);
             } catch (JwtException | IllegalArgumentException ex) {
-                throw new MessagingException("Invalid token");
+                throw new MessagingException("Jeton invalide");
             }
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             if (!jwtService.isTokenValid(token, userDetails)) {
-                throw new MessagingException("Invalid token");
+                throw new MessagingException("Jeton invalide");
             }
 
             UsernamePasswordAuthenticationToken authentication =
@@ -68,7 +68,7 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
         if ((StompCommand.SEND.equals(accessor.getCommand())
                 || StompCommand.SUBSCRIBE.equals(accessor.getCommand()))
                 && accessor.getUser() == null) {
-            throw new MessagingException("Unauthorized");
+            throw new MessagingException("Non autorise");
         }
 
         return message;

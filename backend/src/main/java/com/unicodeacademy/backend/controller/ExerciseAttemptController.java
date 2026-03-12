@@ -48,12 +48,14 @@ public class ExerciseAttemptController {
     public ExerciseAttemptResponse attempt(@PathVariable Long exerciseId,
                                            @RequestBody ExerciseAttemptRequest request,
                                            Authentication auth) {
-        User user = userRepository.findByEmail(auth.getName()).orElseThrow();
-        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+        Exercise exercise = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercice introuvable"));
 
         String submitted = request.getSubmittedAnswer();
         if (submitted == null || submitted.isBlank()) {
-            throw new IllegalArgumentException("submittedAnswer is required");
+            throw new IllegalArgumentException("submittedAnswer est obligatoire");
         }
 
         String normalizedSubmitted = TextEncodingFixer.fix(submitted).trim();
@@ -61,10 +63,10 @@ public class ExerciseAttemptController {
 
         if (exercise.getType() == Exercise.ExerciseType.MCQ) {
             if (choices.size() < 3 || choices.size() > 6) {
-                throw new IllegalStateException("Exercise choices must contain between 3 and 6 options");
+                throw new IllegalStateException("Les choix de l'exercice doivent contenir entre 3 et 6 options");
             }
             normalizedSubmitted = findMatchingChoice(normalizedSubmitted, choices)
-                    .orElseThrow(() -> new IllegalArgumentException("submittedAnswer must match one of the exercise choices"));
+                    .orElseThrow(() -> new IllegalArgumentException("submittedAnswer doit correspondre a l'un des choix de l'exercice"));
         }
 
         String expected = exercise.getAnswer() != null ? exercise.getAnswer() : "";
@@ -72,7 +74,7 @@ public class ExerciseAttemptController {
 
         if (exercise.getType() == Exercise.ExerciseType.MCQ && !normalizedExpected.isBlank()) {
             normalizedExpected = findMatchingChoice(normalizedExpected, choices)
-                    .orElseThrow(() -> new IllegalStateException("Exercise answer must match one of the exercise choices"));
+                    .orElseThrow(() -> new IllegalStateException("La reponse de l'exercice doit correspondre a l'un des choix"));
         }
 
         boolean correct = normalizedExpected.equalsIgnoreCase(normalizedSubmitted);

@@ -33,9 +33,10 @@ public class LessonProgressController {
 
     @GetMapping("/lessons/me")
     public List<LessonProgressResponse> myLessonProgress(Authentication auth) {
-        User user = userRepository.findByEmail(auth.getName()).orElseThrow();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
-        return lessonProgressRepository.findByUserId(user.getId())
+        return lessonProgressRepository.findByUserIdWithLessonAndCourse(user.getId())
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -50,7 +51,7 @@ public class LessonProgressController {
     @PostMapping("/lesson/{lessonId}/complete")
     public ResponseEntity<String> completeLessonSimple(@PathVariable Long lessonId) {
         lessonProgressService.markLessonCompleted(lessonId);
-        return ResponseEntity.ok("Lesson marked as completed");
+        return ResponseEntity.ok("Lecon marquee comme terminee");
     }
 
     @PostMapping("/lessons/{lessonId}/toggle")
@@ -62,7 +63,7 @@ public class LessonProgressController {
     @DeleteMapping("/lesson/{lessonId}/complete")
     public ResponseEntity<String> uncompleteLesson(@PathVariable Long lessonId) {
         lessonProgressService.markLessonIncomplete(lessonId);
-        return ResponseEntity.ok("Lesson marked as incomplete");
+        return ResponseEntity.ok("Lecon marquee comme non terminee");
     }
 
     private LessonProgressResponse toResponse(UserLessonProgress progress) {

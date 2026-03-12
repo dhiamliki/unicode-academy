@@ -30,7 +30,7 @@ public class LeaderboardController {
             UserRepository.LeaderboardProjection row = rows.get(i);
             String username = row.getUsername() != null && !row.getUsername().isBlank()
                     ? row.getUsername()
-                    : "User-" + row.getUserId();
+                    : "Utilisateur-" + row.getUserId();
             response.add(new LeaderboardEntryResponse(
                     i + 1,
                     TextEncodingFixer.fix(username),

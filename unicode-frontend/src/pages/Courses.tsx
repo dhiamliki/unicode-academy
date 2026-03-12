@@ -37,7 +37,7 @@ export default function Courses() {
           setProgressByCourseId(progressMap);
         }
       } catch (err: unknown) {
-        const msg = getErrorMessage(err, "Failed to load courses");
+        const msg = getErrorMessage(err, "Echec du chargement des cours");
         if (!cancelled) {
           setError(msg);
         }
@@ -60,25 +60,25 @@ export default function Courses() {
       <div className="panel panel-hover p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Courses</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">Cours</h2>
             <p className="text-muted mt-1 text-sm">
-              Continue your tracks and monitor completion by course.
+              Continuez vos parcours et suivez la completion par cours.
             </p>
           </div>
           {languageFilter && (
             <span className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-600">
               <Filter className="h-3.5 w-3.5" />
-              Filter: {languageFilter}
+              Filtre : {languageFilter}
             </span>
           )}
         </div>
       </div>
 
-      {loading && <p className="text-muted text-sm">Loading courses...</p>}
+      {loading && <p className="text-muted text-sm">Chargement des cours...</p>}
       {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {!loading && !error && courses.length === 0 && (
-        <div className="panel panel-hover p-5 text-muted text-sm">No courses found for this filter.</div>
+        <div className="panel panel-hover p-5 text-muted text-sm">Aucun cours trouve pour ce filtre.</div>
       )}
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -107,7 +107,7 @@ export default function Courses() {
                     )}
                   </span>
                   <span className="course-language-copy">
-                    <span className="course-language-kicker">Language</span>
+                    <span className="course-language-kicker">Langage</span>
                     <span className="course-language-name">{languageLabel}</span>
                   </span>
                 </span>
@@ -126,7 +126,7 @@ export default function Courses() {
               <div className="mt-auto flex justify-end pt-5">
                 <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600">
                   <Play className="h-3.5 w-3.5" />
-                  Continue
+                  Continuer
                 </span>
               </div>
             </Link>

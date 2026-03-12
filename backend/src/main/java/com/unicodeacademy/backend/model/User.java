@@ -8,7 +8,8 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -33,6 +34,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Role role = Role.USER;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
 
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

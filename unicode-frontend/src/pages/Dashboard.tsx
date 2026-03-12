@@ -78,7 +78,7 @@ export default function Dashboard() {
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          const msg = getErrorMessage(err, "Failed to load dashboard");
+          const msg = getErrorMessage(err, "Echec du chargement du tableau de bord");
           setError(msg);
           setLeaderboard([]);
           setAttachments([]);
@@ -116,7 +116,7 @@ export default function Dashboard() {
         attachment.originalName
       );
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Download failed"));
+      setError(getErrorMessage(err, "Echec du telechargement"));
     }
   }
 
@@ -125,32 +125,32 @@ export default function Dashboard() {
       <div className="panel panel-hover p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-muted text-xs uppercase tracking-wide">Overview</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-900">Welcome back to UniCode</h2>
+            <p className="text-muted text-xs uppercase tracking-wide">Vue d'ensemble</p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-900">Bon retour sur UniCode</h2>
             <p className="text-muted mt-2 text-sm">
-              Track your progress, keep pace with the leaderboard, and continue your lessons.
+              Suivez votre progression, gardez le rythme du classement et continuez vos lecons.
             </p>
           </div>
           {summary?.totals && (
             <div className="grid grid-cols-2 gap-3 text-right sm:grid-cols-4">
-              <StatBadge label="Courses done" value={summary.totals.completedCourses} />
-              <StatBadge label="Lessons done" value={summary.totals.completedLessons} />
-              <StatBadge label="Attempts" value={summary.totals.attemptedExercises} />
-              <StatBadge label="Correct" value={summary.totals.correctExercises} />
+              <StatBadge label="Cours termines" value={summary.totals.completedCourses} />
+              <StatBadge label="Lecons terminees" value={summary.totals.completedLessons} />
+              <StatBadge label="Tentatives" value={summary.totals.attemptedExercises} />
+              <StatBadge label="Correctes" value={summary.totals.correctExercises} />
             </div>
           )}
         </div>
       </div>
 
-      {loading && <p className="text-muted text-sm">Loading dashboard...</p>}
+      {loading && <p className="text-muted text-sm">Chargement du tableau de bord...</p>}
       {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Your Progress</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Votre progression</h3>
             <Link to="/courses" className="text-sm font-medium text-teal-600 hover:text-[#0D9488]">
-              Browse all courses
+              Parcourir tous les cours
             </Link>
           </div>
 
@@ -187,8 +187,8 @@ export default function Dashboard() {
                           <span className="course-language-fallback">{fallbackLanguageMark}</span>
                         )}
                       </span>
-                      <span className="course-language-copy">
-                        <span className="course-language-kicker">Language</span>
+                  <span className="course-language-copy">
+                        <span className="course-language-kicker">Langage</span>
                         <span className="course-language-name">{languageLabel}</span>
                       </span>
                     </span>
@@ -197,7 +197,7 @@ export default function Dashboard() {
 
                   <h4 className="course-card-title">{course.title}</h4>
                   <p className="course-card-subtitle">
-                    {completedLessons}/{totalLessons} lessons completed
+                    {completedLessons}/{totalLessons} lecons terminees
                   </p>
 
                   <div className="course-progress-track">
@@ -210,7 +210,7 @@ export default function Dashboard() {
                   <div className="mt-auto flex justify-end pt-5">
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600">
                       <ArrowRight className="h-3.5 w-3.5" />
-                      Continue
+                      Continuer
                     </span>
                   </div>
                 </Link>
@@ -218,7 +218,7 @@ export default function Dashboard() {
             })}
 
             {!loading && courses.length === 0 && (
-              <div className="panel panel-hover p-5 text-muted text-sm">No courses available yet.</div>
+              <div className="panel panel-hover p-5 text-muted text-sm">Aucun cours disponible pour le moment.</div>
             )}
           </div>
         </section>
@@ -226,13 +226,13 @@ export default function Dashboard() {
         <aside className="panel panel-hover p-5">
           <div className="mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-[#FACC15]" />
-            <h3 className="text-lg font-semibold text-slate-900">Leaderboard</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Classement</h3>
           </div>
 
           <div className="space-y-3">
             {leaderboard.length === 0 ? (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-muted">
-                No leaderboard data yet.
+                Aucune donnee de classement pour le moment.
               </p>
             ) : (
               leaderboard.slice(0, 6).map((entry) => {
@@ -249,7 +249,7 @@ export default function Dashboard() {
                       <p className={`font-medium ${isFirst ? "text-slate-900" : "text-slate-800"}`}>
                         #{entry.rank} {entry.username}
                       </p>
-                      <p className="font-semibold text-slate-900">{entry.points} pts</p>
+                      <p className="font-semibold text-slate-900">{entry.points} points</p>
                     </div>
                     <div className="progress-track mt-2">
                       <div
@@ -267,7 +267,7 @@ export default function Dashboard() {
             to="/leaderboard"
             className="mt-4 inline-flex text-sm font-medium text-teal-600 hover:text-[#0D9488]"
           >
-            View full leaderboard
+            Voir le classement complet
           </Link>
         </aside>
       </div>
@@ -275,19 +275,19 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="panel panel-hover p-5">
           <div className="mb-1 flex items-center justify-between gap-2">
-            <h3 className="text-lg font-semibold text-slate-900">Attachments</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Pieces jointes</h3>
             <Link to="/attachments" className="btn-secondary px-3 py-1.5 text-xs">
-              Open attachments tab
+              Ouvrir l'onglet des pieces jointes
             </Link>
           </div>
           <p className="text-muted mt-1 text-sm">Série d&apos;exercices</p>
 
           <div className="mt-4 space-y-2">
             {loading ? (
-              <p className="text-muted text-sm">Loading attachments...</p>
+              <p className="text-muted text-sm">Chargement des pieces jointes...</p>
             ) : attachments.length === 0 ? (
               <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-muted">
-                No attachments available yet.
+                Aucune piece jointe disponible pour le moment.
               </p>
             ) : (
               attachments.slice(0, 6).map((attachment) => (
@@ -307,7 +307,7 @@ export default function Dashboard() {
                     className="btn-secondary gap-2 px-3 py-1.5 text-xs"
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Download
+                    Telecharger
                   </button>
                 </div>
               ))
@@ -316,19 +316,19 @@ export default function Dashboard() {
         </section>
 
         <section className="panel panel-hover p-5">
-          <h3 className="text-lg font-semibold text-slate-900">Learning</h3>
-          <p className="text-muted mt-1 text-sm">Your weekly momentum snapshot</p>
+          <h3 className="text-lg font-semibold text-slate-900">Apprentissage</h3>
+          <p className="text-muted mt-1 text-sm">Apercu de votre dynamique hebdomadaire</p>
 
           <div className="mt-5 rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5">
             <div className="flex items-center gap-2 text-teal-600">
               <Star className="h-4 w-4" />
-              <p className="text-sm font-semibold">Keep going</p>
+              <p className="text-sm font-semibold">Continuez</p>
             </div>
             <p className="mt-2 text-sm text-slate-700">
-              Complete two more lessons this week to keep your streak active and gain leaderboard points.
+              Terminez deux lecons de plus cette semaine pour garder votre serie active et gagner des points.
             </p>
             <Link to="/courses" className="btn-primary mt-4">
-              Continue learning
+              Continuer l'apprentissage
             </Link>
           </div>
         </section>

@@ -4,6 +4,7 @@ public class UserMeResponse {
     private String username;
     private String email;
     private String role;
+    private String avatarUrl;
     private String preferredLanguageCode;
     private String preferredLanguageName;
 
@@ -13,11 +14,13 @@ public class UserMeResponse {
     public UserMeResponse(String username,
                           String email,
                           String role,
+                          String avatarUrl,
                           String preferredLanguageCode,
                           String preferredLanguageName) {
         this.username = username;
         this.email = email;
         this.role = role;
+        this.avatarUrl = avatarUrl;
         this.preferredLanguageCode = preferredLanguageCode;
         this.preferredLanguageName = preferredLanguageName;
     }
@@ -44,6 +47,14 @@ public class UserMeResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getPreferredLanguageCode() {

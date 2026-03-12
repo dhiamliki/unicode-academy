@@ -6,8 +6,10 @@ import com.unicodeacademy.backend.model.ProgrammingLanguage;
 import com.unicodeacademy.backend.model.User;
 import com.unicodeacademy.backend.repository.ProgrammingLanguageRepository;
 import com.unicodeacademy.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/users/me")
@@ -25,7 +27,7 @@ public class UserPreferenceController {
     @GetMapping("/preference")
     public UserPreferenceResponse getPreference(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
         ProgrammingLanguage preferred = user.getPreferredLanguage();
         String code = preferred != null ? preferred.getCode() : null;
         return new UserPreferenceResponse(code);
@@ -35,15 +37,15 @@ public class UserPreferenceController {
     public UserPreferenceResponse setPreference(@RequestBody UserPreferenceRequest request,
                                                 Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         String code = request.getLanguageCode();
         if (code == null || code.isBlank()) {
-            throw new IllegalArgumentException("languageCode is required");
+            throw new IllegalArgumentException("languageCode est obligatoire");
         }
 
         ProgrammingLanguage language = languageRepository.findByCodeIgnoreCase(code)
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Langue introuvable"));
 
         user.setPreferredLanguage(language);
         userRepository.save(user);

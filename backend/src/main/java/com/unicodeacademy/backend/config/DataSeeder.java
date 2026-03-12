@@ -26,22 +26,22 @@ public class DataSeeder {
 
             Course c = new Course();
             c.setCode("C-101");
-            c.setTitle("C Programming");
-            c.setDescription("Basics of C: variables, conditions, loops.");
+            c.setTitle("Programmation C");
+            c.setDescription("Bases du C : variables, conditions, boucles.");
             c.setLanguage(langC);
 
             Lesson l1 = new Lesson();
-            l1.setTitle("Variables & Types");
+            l1.setTitle("Variables et types");
             l1.setOrderIndex(1);
-            l1.setContent("In C, int is for integers, char is for characters...");
+            l1.setContent("En C, int sert aux entiers, char sert aux caracteres...");
 
             Exercise e1 = new Exercise();
             e1.setType(Exercise.ExerciseType.MCQ);
             e1.setOrderIndex(1);
-            e1.setQuestion("Which type is used for integers in C?");
+            e1.setQuestion("Quel type est utilise pour les entiers en C ?");
             e1.setChoicesJson("[\"char\",\"int\",\"float\",\"double\"]");
             e1.setAnswer("int");
-            e1.setExplanation("int is the standard integer type.");
+            e1.setExplanation("int est le type entier standard.");
 
             e1.setLesson(l1);
             l1.getExercises().add(e1);
@@ -53,8 +53,8 @@ public class DataSeeder {
 
             Course javaCourse = new Course();
             javaCourse.setCode("JAVA-101");
-            javaCourse.setTitle("Java Programming");
-            javaCourse.setDescription("Basics of Java: classes, methods, objects.");
+            javaCourse.setTitle("Programmation Java");
+            javaCourse.setDescription("Bases de Java : classes, methodes, objets.");
             javaCourse.setLanguage(langJava);
 
             courseRepository.save(javaCourse);

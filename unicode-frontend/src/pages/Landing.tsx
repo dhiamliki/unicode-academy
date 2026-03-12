@@ -13,47 +13,47 @@ import "../styles/public-pages.css";
 
 const features = [
   {
-    title: "Progress Tracking",
-    description: "See completed lessons, course milestones, and quiz performance in one dashboard.",
+    title: "Suivi de progression",
+    description: "Consultez les lecons terminees, les etapes de cours et les resultats des quiz dans un seul tableau de bord.",
     icon: BarChart3,
   },
   {
-    title: "Quizzes",
-    description: "Validate your knowledge with checkpoints and final quiz rounds per track.",
+    title: "Quiz",
+    description: "Validez vos connaissances avec des checkpoints et un quiz final par parcours.",
     icon: CircleHelp,
   },
   {
-    title: "Leaderboard",
-    description: "Stay motivated with real-time rankings based on lessons and accuracy.",
+    title: "Classement",
+    description: "Restez motive avec un classement en temps reel base sur les lecons et la precision.",
     icon: Trophy,
   },
   {
-    title: "Live Chat",
-    description: "Collaborate in global and course rooms to unblock faster.",
+    title: "Chat en direct",
+    description: "Collaborez dans les salons globaux et de cours pour avancer plus vite.",
     icon: MessageSquareText,
   },
 ];
 
 const quickStats = [
-  { value: "120+", label: "Guided lessons" },
-  { value: "95%", label: "Quiz completion rate" },
-  { value: "24/7", label: "Live peer support" },
+  { value: "120+", label: "Lecons guidees" },
+  { value: "95%", label: "Taux de completion des quiz" },
+  { value: "24/7", label: "Support entre pairs en direct" },
 ];
 
 const momentumCards = [
   {
-    title: "Structured Paths",
-    description: "Move from fundamentals to advanced projects through role-based tracks.",
+    title: "Parcours structures",
+    description: "Passez des bases aux projets avances grace a des parcours adaptes aux roles.",
     icon: BookOpenCheck,
   },
   {
-    title: "Team Momentum",
-    description: "Use leaderboards and rooms to keep accountability visible and motivating.",
+    title: "Dynamique d'equipe",
+    description: "Utilisez le classement et les salons pour garder une motivation visible.",
     icon: UsersRound,
   },
   {
-    title: "Fast Feedback Loops",
-    description: "Quiz checkpoints and progress trends show exactly where to focus next.",
+    title: "Feedback rapide",
+    description: "Les checkpoints de quiz et tendances de progression montrent ou se concentrer ensuite.",
     icon: Zap,
   },
 ];
@@ -80,19 +80,19 @@ export default function Landing() {
             {isSignedIn ? (
               <>
                 <Link to="/dashboard" className="public-btn public-btn-primary">
-                  Go to dashboard
+                  Aller au tableau de bord
                 </Link>
                 <button type="button" className="public-btn public-btn-danger" onClick={handleLogout}>
-                  Logout
+                  Deconnexion
                 </button>
               </>
             ) : (
               <>
                 <Link to="/register" className="public-btn public-btn-primary">
-                  Get started
+                  Commencer
                 </Link>
                 <Link to="/login" className="public-btn public-btn-secondary">
-                  Login
+                  Connexion
                 </Link>
               </>
             )}
@@ -101,25 +101,25 @@ export default function Landing() {
 
         <main className="landing-main">
           <section className="landing-hero">
-            <p className="landing-kicker">Modern Learning Workspace</p>
-            <h1 className="landing-title">Learn faster with structure, feedback, and community.</h1>
+            <p className="landing-kicker">Espace d'apprentissage moderne</p>
+            <h1 className="landing-title">Apprenez plus vite avec structure, feedback et communaute.</h1>
             <p className="landing-subtitle">
-              UniCode combines guided courses, progress analytics, quizzes, leaderboard competition,
-              and real-time chat in one production-ready learning platform.
+              UniCode combine des cours guides, l'analyse de progression, des quiz, un classement
+              competitif et le chat en temps reel dans une plateforme prete pour la production.
             </p>
 
             <div className="landing-actions">
               {isSignedIn ? (
                 <Link to="/dashboard" className="public-btn public-btn-primary">
-                  Go to dashboard
+                  Aller au tableau de bord
                 </Link>
               ) : (
                 <>
                   <Link to="/register" className="public-btn public-btn-primary">
-                    Get started
+                    Commencer
                   </Link>
                   <Link to="/login" className="public-btn public-btn-secondary">
-                    Login
+                    Connexion
                   </Link>
                 </>
               )}
@@ -136,8 +136,8 @@ export default function Landing() {
           </section>
 
           <aside className="landing-side">
-            <h2>Everything you need in one place</h2>
-            <p>Built for students and instructors who want clear progress and practical collaboration.</p>
+            <h2>Tout ce qu'il faut au meme endroit</h2>
+            <p>Concu pour les apprenants et formateurs qui veulent une progression claire et une collaboration pratique.</p>
 
             <div className="landing-feature-grid">
               {features.map((feature) => {
@@ -158,11 +158,11 @@ export default function Landing() {
 
         <section className="landing-momentum">
           <div className="landing-momentum-copy">
-            <p className="landing-kicker landing-kicker-soft">Built for consistent progress</p>
-            <h2>Stay accountable without leaving your learning flow.</h2>
+            <p className="landing-kicker landing-kicker-soft">Concu pour progresser regulierement</p>
+            <h2>Restez responsable sans quitter votre flux d'apprentissage.</h2>
             <p>
-              Keep lessons, rankings, checkpoints, and collaboration in one connected workspace so
-              you spend more time learning and less time switching tools.
+              Gardez les lecons, le classement, les checkpoints et la collaboration dans un seul
+              espace connecte pour passer plus de temps a apprendre.
             </p>
           </div>
 
@@ -183,9 +183,9 @@ export default function Landing() {
         </section>
 
         <footer className="landing-footer">
-          <span>(c) {new Date().getFullYear()} UniCode. All rights reserved.</span>
+          <span>(c) {new Date().getFullYear()} UniCode. Tous droits reserves.</span>
           <Link to={isSignedIn ? "/dashboard" : "/register"}>
-            {isSignedIn ? "Open workspace" : "Create account"}
+            {isSignedIn ? "Ouvrir l'espace" : "Creer un compte"}
           </Link>
         </footer>
       </div>

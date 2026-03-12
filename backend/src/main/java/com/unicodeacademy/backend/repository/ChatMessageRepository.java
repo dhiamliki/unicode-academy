@@ -4,6 +4,7 @@ import com.unicodeacademy.backend.model.ChatMessage;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
@@ -12,4 +13,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByRoomTypeAndCourseIdOrderByCreatedAtDesc(ChatMessage.RoomType roomType, Long courseId, Pageable pageable);
 
     List<ChatMessage> findByRoomTypeIsNullOrRoomTypeOrderByCreatedAtDesc(ChatMessage.RoomType roomType, Pageable pageable);
+
+    List<ChatMessage> findByCreatedAtBefore(Instant createdAt);
+
+    long deleteByCreatedAtBefore(Instant createdAt);
 }

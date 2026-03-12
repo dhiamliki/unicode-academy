@@ -54,7 +54,7 @@ export default function Attachments() {
         setCourses(courseData);
         setIsAdmin((me.role ?? "").toUpperCase() === "ADMIN");
       } catch (err: unknown) {
-        const msg = getErrorMessage(err, "Failed to load attachments page");
+        const msg = getErrorMessage(err, "Echec du chargement de la page des pieces jointes");
         if (!cancelled) {
           setError(msg);
           setCourses([]);
@@ -116,14 +116,14 @@ export default function Attachments() {
         const items = await getCourseAttachments(selectedCourseFilter);
         const withTitle = items.map((item) => ({
           ...item,
-          courseTitle: activeCourse?.title ?? `Course #${item.courseId}`,
+          courseTitle: activeCourse?.title ?? `Cours #${item.courseId}`,
         }));
 
         if (!cancelled) {
           setAttachments(withTitle);
         }
       } catch (err: unknown) {
-        const msg = getErrorMessage(err, "Failed to load attachments");
+        const msg = getErrorMessage(err, "Echec du chargement des pieces jointes");
         if (!cancelled) {
           setAttachments([]);
           setAttachmentsError(msg);
@@ -181,11 +181,11 @@ export default function Attachments() {
       setAttachments(
         items.map((item) => ({
           ...item,
-          courseTitle: activeCourse?.title ?? `Course #${item.courseId}`,
+          courseTitle: activeCourse?.title ?? `Cours #${item.courseId}`,
         }))
       );
     } catch (err: unknown) {
-      const msg = getErrorMessage(err, "Failed to refresh attachments");
+      const msg = getErrorMessage(err, "Echec de l'actualisation des pieces jointes");
       setAttachmentsError(msg);
     } finally {
       setLoadingAttachments(false);
@@ -200,7 +200,7 @@ export default function Attachments() {
         attachment.originalName
       );
     } catch (err: unknown) {
-      const msg = getErrorMessage(err, "Download failed");
+      const msg = getErrorMessage(err, "Echec du telechargement");
       setAttachmentsError(msg);
       showToast({ type: "error", message: msg });
     }
@@ -211,18 +211,18 @@ export default function Attachments() {
     setUploading(true);
     setAttachmentsError(null);
     setUploadStatus("uploading");
-    setUploadStatusMessage(`Uploading ${selectedFile.name}...`);
+    setUploadStatusMessage(`Envoi de ${selectedFile.name}...`);
 
     try {
       await uploadCourseAttachment(selectedCourseFilter, selectedFile);
-      const successMessage = `${selectedFile.name} uploaded successfully.`;
+      const successMessage = `${selectedFile.name} envoye avec succes.`;
       setSelectedFile(null);
       setUploadStatus("success");
       setUploadStatusMessage(successMessage);
       showToast({ type: "success", message: successMessage });
       await refreshAttachments();
     } catch (err: unknown) {
-      const msg = getErrorMessage(err, "Upload failed");
+      const msg = getErrorMessage(err, "Echec de l'envoi");
       setAttachmentsError(msg);
       setUploadStatus("error");
       setUploadStatusMessage(msg);
@@ -240,9 +240,9 @@ export default function Attachments() {
     try {
       await deleteCourseAttachment(attachment.courseId, attachment.id);
       await refreshAttachments();
-      showToast({ type: "success", message: "Attachment deleted." });
+      showToast({ type: "success", message: "Piece jointe supprimee." });
     } catch (err: unknown) {
-      const msg = getErrorMessage(err, "Delete failed");
+      const msg = getErrorMessage(err, "Echec de la suppression");
       setAttachmentsError(msg);
       showToast({ type: "error", message: msg });
     } finally {
@@ -255,15 +255,15 @@ export default function Attachments() {
       <section className="panel p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Attachments</h2>
-            <p className="mt-1 text-sm text-slate-600">Download Serie d&apos;exercices by course.</p>
+            <h2 className="text-2xl font-semibold text-slate-900">Pieces jointes</h2>
+            <p className="mt-1 text-sm text-slate-600">Telechargez la serie d&apos;exercices par cours.</p>
           </div>
 
           <label className="flex min-w-56 flex-col gap-1 text-sm text-slate-700">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Course
+              Cours
             </span>
-            <select
+              <select
               value={selectedCourseFilter === "all" ? "all" : String(selectedCourseFilter)}
               onChange={(event) => {
                 const value = event.target.value;
@@ -280,8 +280,8 @@ export default function Attachments() {
               disabled={loading || courses.length === 0}
               className="field bg-white"
             >
-              {courses.length === 0 && <option value="">No courses available</option>}
-              {courses.length > 0 && <option value="all">All courses</option>}
+              {courses.length === 0 && <option value="">Aucun cours disponible</option>}
+              {courses.length > 0 && <option value="all">Tous les cours</option>}
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
@@ -292,7 +292,7 @@ export default function Attachments() {
         </div>
       </section>
 
-      {loading && <p className="text-sm text-slate-600">Loading attachments...</p>}
+      {loading && <p className="text-sm text-slate-600">Chargement des pieces jointes...</p>}
       {error && (
         <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
@@ -301,7 +301,7 @@ export default function Attachments() {
 
       {!loading && !error && courses.length === 0 && (
         <section className="panel p-5 text-sm text-slate-600">
-          No courses found. Add a course first, then upload attachments.
+          Aucun cours trouve. Ajoutez d'abord un cours, puis envoyez des pieces jointes.
         </section>
       )}
 
@@ -310,7 +310,7 @@ export default function Attachments() {
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-teal-100 bg-white">
               {selectedCourseFilter === "all" ? (
-                <span className="text-[11px] font-semibold text-teal-600">ALL</span>
+                <span className="text-[11px] font-semibold text-teal-600">TOUS</span>
               ) : selectedCourseImage ? (
                 <img
                   src={selectedCourseImage}
@@ -327,7 +327,7 @@ export default function Attachments() {
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Serie d&apos;exercices</h3>
               <p className="text-sm text-slate-600">
-                {selectedCourseFilter === "all" ? "All courses" : (selectedCourse?.title ?? "Selected course")}
+                {selectedCourseFilter === "all" ? "Tous les cours" : (selectedCourse?.title ?? "Cours selectionne")}
               </p>
             </div>
           </div>
@@ -339,12 +339,12 @@ export default function Attachments() {
           )}
 
           {loadingAttachments ? (
-            <p className="mt-4 text-sm text-slate-600">Loading files...</p>
+            <p className="mt-4 text-sm text-slate-600">Chargement des fichiers...</p>
           ) : attachments.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed border-[var(--color-border)] bg-slate-50 px-4 py-6 text-sm text-slate-600">
               {selectedCourseFilter === "all"
-                ? "No attachments uploaded yet."
-                : "No attachments uploaded for this course yet."}
+                ? "Aucune piece jointe envoyee pour le moment."
+                : "Aucune piece jointe envoyee pour ce cours pour le moment."}
             </div>
           ) : (
             <ul className="mt-4 space-y-2">
@@ -369,7 +369,7 @@ export default function Attachments() {
                         className="btn-secondary gap-2 px-3 py-1.5 text-xs"
                       >
                         <Download className="h-3.5 w-3.5" />
-                        Download
+                        Telecharger
                       </button>
 
                       {isAdmin && (
@@ -380,7 +380,7 @@ export default function Attachments() {
                           className="btn-danger gap-2 px-3 py-1.5 text-xs"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          {deletingAttachmentKey === deleteKey ? "Deleting..." : "Delete"}
+                          {deletingAttachmentKey === deleteKey ? "Suppression..." : "Supprimer"}
                         </button>
                       )}
                     </div>
@@ -392,13 +392,13 @@ export default function Attachments() {
 
           {isAdmin && selectedCourseFilter === "all" && (
             <div className="mt-5 rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-              Select a specific course from the dropdown to upload a new attachment.
+              Selectionnez un cours precis dans la liste pour envoyer une nouvelle piece jointe.
             </div>
           )}
 
           {isAdmin && selectedCourseFilter !== "all" && (
             <div className="mt-5 rounded-lg border border-teal-100 bg-teal-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-teal-800">Admin upload</p>
+              <p className="mb-2 text-sm font-semibold text-teal-800">Envoi administrateur</p>
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="file"
@@ -418,7 +418,7 @@ export default function Attachments() {
                   className="btn-primary gap-2"
                 >
                   <FilePlus2 className="h-4 w-4" />
-                  {uploading ? "Uploading..." : "Upload attachment"}
+                  {uploading ? "Envoi..." : "Envoyer la piece jointe"}
                 </button>
               </div>
               {uploadStatus !== "idle" && uploadStatusMessage && (

@@ -42,13 +42,13 @@ public class AdminUserController {
     @PatchMapping("/{id}/role")
     public AdminUserResponse updateRole(@PathVariable Long id,
                                         @RequestBody UpdateUserRoleRequest request) {
-        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
         User.Role nextRole = parseRole(request);
 
         if (user.getRole() == User.Role.ADMIN
                 && nextRole == User.Role.USER
                 && userRepository.countByRole(User.Role.ADMIN) <= 1) {
-            throw new IllegalStateException("At least one ADMIN account is required");
+            throw new IllegalStateException("Au moins un compte ADMIN est requis");
         }
 
         user.setRole(nextRole);
@@ -58,15 +58,15 @@ public class AdminUserController {
     @DeleteMapping("/{id}")
     @Transactional
     public void deleteUser(@PathVariable Long id, Authentication authentication) {
-        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
         String currentEmail = authentication.getName();
         if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentEmail)) {
-            throw new IllegalStateException("You cannot delete your own account");
+            throw new IllegalStateException("Vous ne pouvez pas supprimer votre propre compte");
         }
 
         if (user.getRole() == User.Role.ADMIN && userRepository.countByRole(User.Role.ADMIN) <= 1) {
-            throw new IllegalStateException("At least one ADMIN account is required");
+            throw new IllegalStateException("Au moins un compte ADMIN est requis");
         }
 
         String terminatedEmail = user.getEmail();
@@ -83,14 +83,14 @@ public class AdminUserController {
 
     private User.Role parseRole(UpdateUserRoleRequest request) {
         if (request == null || request.getRole() == null || request.getRole().isBlank()) {
-            throw new IllegalArgumentException("Role is required");
+            throw new IllegalArgumentException("Le role est obligatoire");
         }
 
         String normalized = request.getRole().trim().toUpperCase(Locale.ROOT);
         try {
             return User.Role.valueOf(normalized);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Role must be ADMIN or USER");
+            throw new IllegalArgumentException("Le role doit etre ADMIN ou USER");
         }
     }
 

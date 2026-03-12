@@ -15,8 +15,19 @@ export type AuthResponse = {
   token: string;
 };
 
+export type GoogleLoginRequest = {
+  idToken: string;
+};
+
 export async function loginApi(data: LoginRequest): Promise<AuthResponse> {
   const res = await http.post<AuthResponse>("/api/auth/login", data);
+  return res.data;
+}
+
+export async function googleLoginApi(
+  data: GoogleLoginRequest
+): Promise<AuthResponse> {
+  const res = await http.post<AuthResponse>("/api/auth/google", data);
   return res.data;
 }
 

@@ -24,6 +24,18 @@ public class Lesson {
     @Column(length = 4000)
     private String content;
 
+    @Column(columnDefinition = "TEXT")
+    private String starterCode;
+
+    @Column(length = 50)
+    private String editorLanguage;
+
+    @Column(length = 40)
+    private String executionType;
+
+    @Column(columnDefinition = "TEXT")
+    private String sampleOutput;
+
     @Column(nullable = false)
     private Integer orderIndex;
 

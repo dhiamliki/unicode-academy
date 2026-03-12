@@ -11,8 +11,10 @@ import com.unicodeacademy.backend.repository.CourseRepository;
 import com.unicodeacademy.backend.repository.UserCourseProgressRepository;
 import com.unicodeacademy.backend.repository.UserExerciseAttemptRepository;
 import com.unicodeacademy.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +43,7 @@ public class ProgressController {
     public List<ProgressResponse> myProgress(Authentication auth) {
 
         User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         return progressRepository.findByUserIdWithCourseAndLanguage(user.getId())
                 .stream()
@@ -51,7 +53,8 @@ public class ProgressController {
 
     @GetMapping("/summary")
     public ProgressSummaryResponse mySummary(Authentication auth) {
-        User user = userRepository.findByEmail(auth.getName()).orElseThrow();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         List<CourseProgressSummaryItem> courseItems = courseRepository.findCourseProgressByUserId(user.getId())
                 .stream()
@@ -100,10 +103,10 @@ public class ProgressController {
                                            Authentication auth) {
 
         User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         Course course = courseRepository.findById(courseId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cours introuvable"));
 
         UserCourseProgress progress =
                 progressRepository.findByUserIdAndCourseId(user.getId(), courseId)

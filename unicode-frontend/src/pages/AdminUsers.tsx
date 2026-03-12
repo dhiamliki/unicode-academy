@@ -51,7 +51,7 @@ export default function AdminUsers() {
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          setError(getErrorMessage(err, "Failed to load admin users"));
+          setError(getErrorMessage(err, "Echec du chargement des utilisateurs administrateur"));
           setUsers([]);
           setIsAdmin(false);
         }
@@ -98,7 +98,7 @@ export default function AdminUsers() {
       const data = await getAdminUsers();
       setUsers(data);
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to refresh users"));
+      setError(getErrorMessage(err, "Echec de l'actualisation des utilisateurs"));
     } finally {
       setLoading(false);
     }
@@ -114,10 +114,10 @@ export default function AdminUsers() {
       setUsers((prev) => prev.map((item) => (item.id === user.id ? updated : item)));
       showToast({
         type: "success",
-        message: `${updated.username} is now ${updated.role}.`,
+        message: `${updated.username} est maintenant ${updated.role}.`,
       });
     } catch (err: unknown) {
-      const message = getErrorMessage(err, "Role update failed");
+      const message = getErrorMessage(err, "Echec de la mise a jour du role");
       setError(message);
       showToast({ type: "error", message });
     } finally {
@@ -136,11 +136,11 @@ export default function AdminUsers() {
       setUsers((prev) => prev.filter((user) => user.id !== deleteCandidate.id));
       showToast({
         type: "success",
-        message: `${deleteCandidate.username} was deleted.`,
+        message: `${deleteCandidate.username} a ete supprime.`,
       });
       setDeleteCandidate(null);
     } catch (err: unknown) {
-      const message = getErrorMessage(err, "Delete failed");
+      const message = getErrorMessage(err, "Echec de la suppression");
       setError(message);
       showToast({ type: "error", message });
     } finally {
@@ -149,18 +149,18 @@ export default function AdminUsers() {
   }
 
   if (loading && isAdmin === null) {
-    return <p className="text-sm text-[var(--color-text-muted)]">Loading admin workspace...</p>;
+    return <p className="text-sm text-[var(--color-text-muted)]">Chargement de l'espace administrateur...</p>;
   }
 
   if (!loading && !isAdmin) {
     return (
       <section className="panel max-w-2xl p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Admin Access Required</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Acces administrateur requis</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Your account does not have permission to open this page.
+          Votre compte n'a pas la permission d'ouvrir cette page.
         </p>
         <Link to="/dashboard" className="btn-primary mt-5">
-          Go to dashboard
+          Aller au tableau de bord
         </Link>
       </section>
     );
@@ -174,34 +174,34 @@ export default function AdminUsers() {
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary-dark)]">
               Administration
             </p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-900">User Management</h2>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-900">Gestion des utilisateurs</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Manage registered accounts, roles, and access.
+              Gere les comptes inscrits, les roles et les acces.
             </p>
           </div>
           <button type="button" onClick={refreshUsers} className="btn-secondary gap-2" disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            Actualiser
           </button>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Total users</p>
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Utilisateurs totaux</p>
             <p className="mt-1 flex items-center gap-1.5 text-lg font-semibold text-slate-900">
               <Users className="h-4 w-4 text-[var(--color-primary-dark)]" />
               {userCounts.total}
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Admins</p>
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Administrateurs</p>
             <p className="mt-1 flex items-center gap-1.5 text-lg font-semibold text-slate-900">
               <Shield className="h-4 w-4 text-[var(--color-primary-dark)]" />
               {userCounts.admins}
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Regular users</p>
+            <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Utilisateurs standards</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{userCounts.regular}</p>
           </div>
         </div>
@@ -211,29 +211,29 @@ export default function AdminUsers() {
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex min-w-[220px] flex-1 flex-col gap-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-              Search users
+              Rechercher des utilisateurs
             </span>
             <input
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               className="field"
-              placeholder="Search by username or email"
+              placeholder="Rechercher par nom d'utilisateur ou e-mail"
             />
           </label>
 
           <label className="flex w-full max-w-[220px] flex-col gap-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-              Role filter
+              Filtre de role
             </span>
             <select
               value={roleFilter}
               onChange={(event) => setRoleFilter(event.target.value as RoleFilter)}
               className="field bg-white"
             >
-              <option value="ALL">All roles</option>
-              <option value="ADMIN">Admin</option>
-              <option value="USER">User</option>
+              <option value="ALL">Tous les roles</option>
+              <option value="ADMIN">Administrateur</option>
+              <option value="USER">Utilisateur</option>
             </select>
           </label>
         </div>
@@ -249,10 +249,10 @@ export default function AdminUsers() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">ID</th>
-                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Username</th>
-                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Email</th>
+                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Nom d'utilisateur</th>
+                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">E-mail</th>
                 <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Role</th>
-                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Created</th>
+                <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold">Cree le</th>
                 <th className="border-b border-[var(--color-border)] px-3 py-2 font-semibold text-right">Actions</th>
               </tr>
             </thead>
@@ -289,10 +289,10 @@ export default function AdminUsers() {
                           disabled={isBusy}
                         >
                           {updatingUserId === user.id
-                            ? "Saving..."
+                            ? "Enregistrement..."
                             : user.role === "ADMIN"
-                              ? "Demote"
-                              : "Promote"}
+                              ? "Retrograder"
+                              : "Promouvoir"}
                         </button>
                         <button
                           type="button"
@@ -301,7 +301,7 @@ export default function AdminUsers() {
                           disabled={isBusy}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          Supprimer
                         </button>
                       </div>
                     </td>
@@ -314,7 +314,7 @@ export default function AdminUsers() {
 
         {!loading && filteredUsers.length === 0 && (
           <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-slate-50 p-5 text-sm text-slate-600">
-            No users found for the selected filter.
+            Aucun utilisateur trouve pour le filtre selectionne.
           </div>
         )}
       </section>
@@ -322,10 +322,10 @@ export default function AdminUsers() {
       {deleteCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-[0_18px_36px_rgba(15,23,42,0.25)]">
-            <h3 className="text-lg font-semibold text-slate-900">Delete User</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Supprimer l'utilisateur</h3>
             <p className="mt-2 text-sm text-slate-600">
-              Delete <span className="font-semibold text-slate-900">{deleteCandidate.username}</span>?
-              This action cannot be undone.
+              Supprimer <span className="font-semibold text-slate-900">{deleteCandidate.username}</span> ?
+              Cette action est irreversible.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -334,7 +334,7 @@ export default function AdminUsers() {
                 className="btn-secondary"
                 disabled={deletingUserId === deleteCandidate.id}
               >
-                Cancel
+                Annuler
               </button>
               <button
                 type="button"
@@ -342,7 +342,7 @@ export default function AdminUsers() {
                 className="btn-danger"
                 disabled={deletingUserId === deleteCandidate.id}
               >
-                {deletingUserId === deleteCandidate.id ? "Deleting..." : "Delete user"}
+                {deletingUserId === deleteCandidate.id ? "Suppression..." : "Supprimer l'utilisateur"}
               </button>
             </div>
           </div>

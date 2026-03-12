@@ -66,6 +66,7 @@ export default function CourseDetails() {
   );
 
   const isFinalQuizUnlocked =
+    isAdmin ||
     regularLessons.length === 0 ||
     completedRegularLessonsCount >= regularLessons.length;
 
@@ -78,9 +79,12 @@ export default function CourseDetails() {
       setAttachmentsError(null);
 
       try {
-        const [courseRes, lessonRes, lessonProgressRes, summary, attachmentList, me] = await Promise.all([
+        const [courseRes, lessonRes] = await Promise.all([
           http.get<Course>(`/api/courses/${courseId}`),
           http.get<Lesson[]>(`/api/courses/${courseId}/lessons`),
+        ]);
+
+        const [lessonProgressRes, summaryRes, attachmentListRes, meRes] = await Promise.allSettled([
           getMyLessonProgress(),
           getProgressSummary(),
           getCourseAttachments(courseId),
@@ -90,21 +94,40 @@ export default function CourseDetails() {
         if (!cancelled) {
           setCourse(courseRes.data);
           setLessons(lessonRes.data);
-          setAttachments(attachmentList);
-          setIsAdmin((me.role ?? "").toUpperCase() === "ADMIN");
 
-          const completedIds = lessonProgressRes.data
-            .filter((progress: any) => progress.status === "COMPLETED")
-            .map((progress: any) => progress.lessonId ?? progress.lesson?.id)
-            .filter((lessonId: number | undefined) => typeof lessonId === "number");
+          if (lessonProgressRes.status === "fulfilled") {
+            const completedIds = lessonProgressRes.value.data
+              .filter((progress: any) => progress.status === "COMPLETED")
+              .map((progress: any) => progress.lessonId ?? progress.lesson?.id)
+              .filter((lessonId: number | undefined) => typeof lessonId === "number");
+            setCompletedLessonIds(completedIds);
+          } else {
+            setCompletedLessonIds([]);
+          }
 
-          setCompletedLessonIds(completedIds);
+          if (summaryRes.status === "fulfilled") {
+            const courseSummary = summaryRes.value.courses.find((item) => item.courseId === courseId);
+            setCourseProgressPercentage(courseSummary?.percentage ?? 0);
+          } else {
+            setCourseProgressPercentage(0);
+          }
 
-          const courseSummary = summary.courses.find((item) => item.courseId === courseId);
-          setCourseProgressPercentage(courseSummary?.percentage ?? 0);
+          if (attachmentListRes.status === "fulfilled") {
+            setAttachments(attachmentListRes.value);
+            setAttachmentsError(null);
+          } else {
+            setAttachments([]);
+            setAttachmentsError("Les pieces jointes sont indisponibles pour le moment.");
+          }
+
+          if (meRes.status === "fulfilled") {
+            setIsAdmin((meRes.value.role ?? "").toUpperCase() === "ADMIN");
+          } else {
+            setIsAdmin(false);
+          }
         }
       } catch (err: any) {
-        const msg = err?.response?.data?.message ?? err?.message ?? "Failed to load course";
+        const msg = err?.response?.data?.message ?? err?.message ?? "Echec du chargement du cours";
         if (!cancelled) {
           setError(msg);
         }
@@ -131,7 +154,7 @@ export default function CourseDetails() {
       setAttachmentsError(null);
     } catch (err: any) {
       const msg =
-        err?.response?.data?.message ?? err?.message ?? "Failed to refresh attachments";
+        err?.response?.data?.message ?? err?.message ?? "Echec de l'actualisation des pieces jointes";
       setAttachmentsError(msg);
     }
   }
@@ -146,7 +169,7 @@ export default function CourseDetails() {
       setSelectedFile(null);
       await refreshAttachments();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "Upload failed";
+      const msg = err?.response?.data?.message ?? err?.message ?? "Echec de l'envoi";
       setAttachmentsError(msg);
     } finally {
       setUploading(false);
@@ -161,7 +184,7 @@ export default function CourseDetails() {
       await deleteCourseAttachment(courseId, attachmentId);
       await refreshAttachments();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "Delete failed";
+      const msg = err?.response?.data?.message ?? err?.message ?? "Echec de la suppression";
       setAttachmentsError(msg);
     } finally {
       setDeletingAttachmentId(null);
@@ -172,7 +195,7 @@ export default function CourseDetails() {
     try {
       await downloadCourseAttachment(courseId, attachment.id, attachment.originalName);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "Download failed";
+      const msg = err?.response?.data?.message ?? err?.message ?? "Echec du telechargement";
       setAttachmentsError(msg);
     }
   }
@@ -181,10 +204,10 @@ export default function CourseDetails() {
     <div className="space-y-6">
       <Link to="/courses" className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-800">
         <ArrowLeft className="h-4 w-4" />
-        Back to courses
+        Retour aux cours
       </Link>
 
-      {loading && <p className="text-sm text-slate-600">Loading course...</p>}
+      {loading && <p className="text-sm text-slate-600">Chargement du cours...</p>}
       {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {!loading && !error && course && (
@@ -195,7 +218,7 @@ export default function CourseDetails() {
 
             <div className="mt-4">
               <p className="mb-2 text-sm font-medium text-slate-700">
-                Course progress: {courseProgressPercentage}%
+                Progression du cours : {courseProgressPercentage}%
               </p>
               <div className="progress-track max-w-xl">
                 <div
@@ -207,7 +230,7 @@ export default function CourseDetails() {
           </div>
 
           <section className="panel p-6">
-            <h3 className="text-lg font-semibold text-slate-900">Attachments / Serie d'exercices</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Pieces jointes / Serie d'exercices</h3>
             {attachmentsError && (
               <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {attachmentsError}
@@ -215,7 +238,7 @@ export default function CourseDetails() {
             )}
 
             {attachments.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-600">No attachments yet.</p>
+              <p className="mt-3 text-sm text-slate-600">Aucune piece jointe pour le moment.</p>
             ) : (
               <ul className="mt-4 space-y-2">
                 {attachments.map((attachment) => (
@@ -235,7 +258,7 @@ export default function CourseDetails() {
                         className="btn-secondary gap-2 px-3 py-1.5 text-xs"
                       >
                         <Download className="h-3.5 w-3.5" />
-                        Download
+                        Telecharger
                       </button>
 
                       {isAdmin && (
@@ -246,7 +269,7 @@ export default function CourseDetails() {
                           className="btn-danger gap-2 px-3 py-1.5 text-xs"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          {deletingAttachmentId === attachment.id ? "Deleting..." : "Delete"}
+                          {deletingAttachmentId === attachment.id ? "Suppression..." : "Supprimer"}
                         </button>
                       )}
                     </div>
@@ -257,7 +280,7 @@ export default function CourseDetails() {
 
             {isAdmin && (
               <div className="mt-5 rounded-lg border border-teal-100 bg-teal-50 p-4">
-                <p className="mb-2 text-sm font-semibold text-teal-800">Admin upload</p>
+                <p className="mb-2 text-sm font-semibold text-teal-800">Envoi administrateur</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="file"
@@ -272,7 +295,7 @@ export default function CourseDetails() {
                     className="btn-primary gap-2"
                   >
                     <FilePlus2 className="h-4 w-4" />
-                    {uploading ? "Uploading..." : "Upload"}
+                    {uploading ? "Envoi..." : "Envoyer"}
                   </button>
                 </div>
               </div>
@@ -280,9 +303,9 @@ export default function CourseDetails() {
           </section>
 
           <section className="panel p-6">
-            <h3 className="text-lg font-semibold text-slate-900">Lessons</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Lecons</h3>
             {regularLessons.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-600">No lessons yet.</p>
+              <p className="mt-3 text-sm text-slate-600">Aucune lecon pour le moment.</p>
             ) : (
               <ul className="mt-4 space-y-2">
                 {regularLessons.map((lesson) => {
@@ -305,14 +328,14 @@ export default function CourseDetails() {
 
           <section className="panel p-6">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-lg font-semibold text-slate-900">Final Quiz</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Quiz final</h3>
               <span className="text-xs font-medium text-slate-500">
-                {completedRegularLessonsCount}/{regularLessons.length} lessons completed
+                {completedRegularLessonsCount}/{regularLessons.length} lecons terminees
               </span>
             </div>
 
             {finalQuizLessons.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-600">No final quiz for this course.</p>
+              <p className="mt-3 text-sm text-slate-600">Aucun quiz final pour ce cours.</p>
             ) : isFinalQuizUnlocked ? (
               <ul className="mt-4 space-y-2">
                 {finalQuizLessons.map((lesson) => {
@@ -334,10 +357,10 @@ export default function CourseDetails() {
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <p className="inline-flex items-center gap-2 text-sm font-medium text-amber-800">
                   <Lock className="h-4 w-4" />
-                  Final quiz is locked.
+                  Le quiz final est verrouille.
                 </p>
                 <p className="mt-1 text-sm text-amber-700">
-                  Complete all regular lessons first to unlock this section.
+                  Terminez d'abord toutes les lecons normales pour debloquer cette section.
                 </p>
 
                 <ul className="mt-3 space-y-2">

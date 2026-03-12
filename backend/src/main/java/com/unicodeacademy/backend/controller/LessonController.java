@@ -9,16 +9,20 @@ import com.unicodeacademy.backend.repository.LessonRepository;
 import com.unicodeacademy.backend.util.TextEncodingFixer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/lessons")
 public class LessonController {
+    private static final String DEFAULT_PRACTICE_LANGUAGE = "text";
 
     private final LessonRepository lessonRepository;
     private final ExerciseRepository exerciseRepository;
@@ -34,12 +38,24 @@ public class LessonController {
 
     @GetMapping("/{id}")
     public LessonResponse lessonById(@PathVariable Long id) {
-        Lesson lesson = lessonRepository.findById(id).orElseThrow();
         List<ExerciseResponse> exercises = exerciseRepository.findByLessonIdOrderByOrderIndexAsc(id)
                 .stream()
                 .map(this::toExerciseResponse)
                 .collect(Collectors.toList());
-        return toLessonResponse(lesson, exercises);
+
+        try {
+            Lesson lesson = lessonRepository.findByIdWithCourseAndLanguage(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lecon introuvable"));
+            return toLessonResponse(lesson, exercises);
+        } catch (RuntimeException ex) {
+            if (!isMissingLessonColumnError(ex)) {
+                throw ex;
+            }
+
+            LessonRepository.LessonCoreProjection core = lessonRepository.findCoreById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lecon introuvable"));
+            return toFallbackLessonResponse(core, exercises);
+        }
     }
 
     @GetMapping("/{id}/exercises")
@@ -60,7 +76,28 @@ public class LessonController {
                 TextEncodingFixer.fix(lesson.getTitle()),
                 TextEncodingFixer.fix(lesson.getContent()),
                 lesson.getOrderIndex(),
-                exercises
+                exercises,
+                safeStarterCode(lesson.getStarterCode()),
+                TextEncodingFixer.fix(lesson.getEditorLanguage()),
+                resolvePracticeLanguage(lesson),
+                TextEncodingFixer.fix(lesson.getExecutionType()),
+                TextEncodingFixer.fix(lesson.getSampleOutput())
+        );
+    }
+
+    private LessonResponse toFallbackLessonResponse(LessonRepository.LessonCoreProjection lesson,
+                                                    List<ExerciseResponse> exercises) {
+        return new LessonResponse(
+                lesson.getId(),
+                TextEncodingFixer.fix(lesson.getTitle()),
+                TextEncodingFixer.fix(lesson.getContent()),
+                lesson.getOrderIndex(),
+                exercises,
+                "",
+                null,
+                resolvePracticeLanguage(null, lesson.getLanguageCode()),
+                null,
+                null
         );
     }
 
@@ -97,6 +134,94 @@ public class LessonController {
                     .collect(Collectors.toList());
         } catch (Exception ex) {
             return Collections.emptyList();
+        }
+    }
+
+    private String resolvePracticeLanguage(Lesson lesson) {
+        return resolvePracticeLanguage(lesson.getEditorLanguage(),
+                lesson.getCourse() != null && lesson.getCourse().getLanguage() != null
+                        ? lesson.getCourse().getLanguage().getCode()
+                        : null);
+    }
+
+    private String resolvePracticeLanguage(String editorLanguage, String fallbackLanguageCode) {
+        if (isMeaningfulLanguage(editorLanguage)) {
+            return editorLanguage;
+        }
+
+        if (hasText(fallbackLanguageCode)) {
+            return TextEncodingFixer.fix(fallbackLanguageCode.trim());
+        }
+
+        return DEFAULT_PRACTICE_LANGUAGE;
+    }
+
+    private boolean isMeaningfulLanguage(String language) {
+        if (language == null || language.isBlank()) {
+            return false;
+        }
+
+        String normalized = language.trim().toLowerCase(Locale.ROOT);
+        return !normalized.equals("code")
+                && !normalized.equals("plaintext")
+                && !normalized.equals("text");
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String safeStarterCode(String starterCode) {
+        if (!hasText(starterCode)) {
+            return "";
+        }
+        if (isLegacyOidReference(starterCode)) {
+            return "";
+        }
+        return TextEncodingFixer.fix(starterCode);
+    }
+
+    private boolean isLegacyOidReference(String value) {
+        String trimmed = value == null ? "" : value.trim();
+        return trimmed.length() >= 5 && trimmed.chars().allMatch(Character::isDigit);
+    }
+
+    private boolean isMissingLessonColumnError(Throwable throwable) {
+        Throwable cursor = throwable;
+        while (cursor != null) {
+            String sqlState = extractSqlState(cursor);
+            if ("42703".equals(sqlState)) {
+                return true;
+            }
+
+            String message = cursor.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase(Locale.ROOT);
+                boolean referencesExpectedColumn = normalized.contains("starter_code")
+                        || normalized.contains("editor_language")
+                        || normalized.contains("execution_type")
+                        || normalized.contains("sample_output");
+                boolean missingColumnSignal = normalized.contains("does not exist")
+                        || normalized.contains("n'existe pas")
+                        || normalized.contains("unknown column")
+                        || normalized.contains("colonne");
+
+                if (referencesExpectedColumn && missingColumnSignal) {
+                    return true;
+                }
+            }
+            cursor = cursor.getCause();
+        }
+        return false;
+    }
+
+    private String extractSqlState(Throwable throwable) {
+        try {
+            var method = throwable.getClass().getMethod("getSQLState");
+            Object value = method.invoke(throwable);
+            return value != null ? value.toString() : null;
+        } catch (Exception ex) {
+            return null;
         }
     }
 }

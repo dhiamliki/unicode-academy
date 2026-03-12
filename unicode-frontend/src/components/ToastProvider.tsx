@@ -58,12 +58,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             <div className="mb-1 font-semibold">
               {t.type === "success"
-                ? "Success"
+                ? "Succes"
                 : t.type === "error"
-                  ? "Error"
+                  ? "Erreur"
                   : t.type === "warning"
-                    ? "Warning"
-                    : "Info"}
+                    ? "Avertissement"
+                    : "Information"}
             </div>
             <div>{t.message}</div>
           </div>
@@ -76,7 +76,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    throw new Error("useToast must be used within ToastProvider");
+    throw new Error("useToast doit etre utilise dans ToastProvider");
   }
   return ctx;
 }

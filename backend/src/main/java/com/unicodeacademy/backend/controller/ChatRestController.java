@@ -59,13 +59,13 @@ public class ChatRestController {
             Principal principal
     ) {
         if (principal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Non autorise");
         }
         if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier est obligatoire");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "File exceeds 10MB");
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Le fichier depasse 10 Mo");
         }
 
         String originalName = StringUtils.cleanPath(file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
@@ -81,7 +81,7 @@ public class ChatRestController {
             Path target = UPLOAD_DIR.resolve(storedName).normalize();
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store file");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible d'enregistrer le fichier");
         }
 
         String attachmentUrl = "/api/chat/files/" + storedName;
@@ -115,18 +115,18 @@ public class ChatRestController {
             Path baseDir = UPLOAD_DIR.toAbsolutePath().normalize();
             Path filePath = baseDir.resolve(filename).normalize();
             if (!filePath.startsWith(baseDir)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filename");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nom de fichier invalide");
             }
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fichier introuvable");
             }
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
         } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fichier introuvable");
         }
     }
 }

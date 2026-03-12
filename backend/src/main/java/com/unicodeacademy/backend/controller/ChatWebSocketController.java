@@ -22,7 +22,7 @@ public class ChatWebSocketController {
     @SendTo("/topic/chat/global")
     public ChatMessageResponse sendGlobal(ChatMessageRequest request, Principal principal) {
         if (principal == null) {
-            throw new IllegalStateException("Unauthorized");
+            throw new IllegalStateException("Non autorise");
         }
 
         ChatMessage saved = chatMessageService.createGlobalMessage(principal.getName(), request.getContent());
@@ -35,7 +35,7 @@ public class ChatWebSocketController {
                                           ChatMessageRequest request,
                                           Principal principal) {
         if (principal == null) {
-            throw new IllegalStateException("Unauthorized");
+            throw new IllegalStateException("Non autorise");
         }
 
         ChatMessage saved = chatMessageService.createCourseMessage(principal.getName(), request.getContent(), courseId);

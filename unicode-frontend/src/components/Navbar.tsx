@@ -265,10 +265,10 @@ export default function Navbar() {
                 }}
               >
                 <button type="button" onClick={markAllRead} style={panelButton}>
-                  Mark all as read
+                  Tout marquer comme lu
                 </button>
                 <button type="button" onClick={clearAll} style={panelButton}>
-                  Clear all
+                  Tout effacer
                 </button>
                 <button
                   type="button"
@@ -280,7 +280,7 @@ export default function Navbar() {
                     cursor: hasSelected ? "pointer" : "not-allowed",
                   }}
                 >
-                  Delete selected
+                  Supprimer la selection
                 </button>
               </div>
             </div>
@@ -292,7 +292,7 @@ export default function Navbar() {
             type="button"
             aria-haspopup="menu"
             aria-expanded={profileOpen}
-            aria-label="Profile menu"
+            aria-label="Menu profil"
             onClick={() => {
               setProfileOpen((prev) => !prev);
               setNotifOpen(false);
@@ -332,7 +332,7 @@ export default function Navbar() {
                 onClick={goProfile}
                 style={menuButtonStyle}
               >
-                Profile
+                Profil
               </button>
               <button
                 role="menuitem"
@@ -340,7 +340,7 @@ export default function Navbar() {
                 onClick={goLeaderboard}
                 style={menuButtonStyle}
               >
-                Leaderboard
+                Classement
               </button>
               <button
                 role="menuitem"

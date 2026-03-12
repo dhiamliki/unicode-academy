@@ -7,10 +7,12 @@ import com.unicodeacademy.backend.repository.UserCourseProgressRepository;
 import com.unicodeacademy.backend.repository.UserExerciseAttemptRepository;
 import com.unicodeacademy.backend.repository.UserLessonProgressRepository;
 import com.unicodeacademy.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/stats")
@@ -33,7 +35,8 @@ public class StatsController {
 
     @GetMapping("/me")
     public StatsResponse myStats(Authentication auth) {
-        User user = userRepository.findByEmail(auth.getName()).orElseThrow();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         long coursesCompleted = courseProgressRepository.findByUserId(user.getId())
                 .stream()

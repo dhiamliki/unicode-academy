@@ -41,5 +41,26 @@ export const uncompleteLesson = (lessonId: number) =>
 
 export const getMyLessonProgress = () => http.get(`/api/progress/lessons/me`);
 
+export type CodeRunRequest = {
+  language: string;
+  code: string;
+  stdin?: string;
+};
+
+export type CodeRunResponse = {
+  success: boolean;
+  language: string;
+  stdout: string;
+  stderr: string;
+  compileOutput: string;
+  timedOut: boolean;
+  exitCode: number | null;
+};
+
+export const runCode = async (payload: CodeRunRequest) => {
+  const res = await http.post<CodeRunResponse>("/api/code/run", payload);
+  return res.data;
+};
+
 
 

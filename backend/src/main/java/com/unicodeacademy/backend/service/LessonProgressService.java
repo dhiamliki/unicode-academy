@@ -28,10 +28,10 @@ public class LessonProgressService {
     public UserLessonProgress markLessonCompleted(Long lessonId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
 
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson not found: " + lessonId));
+                .orElseThrow(() -> new RuntimeException("Lecon introuvable: " + lessonId));
 
         assertLessonCanBeCompleted(user, lesson);
 
@@ -52,10 +52,10 @@ public class LessonProgressService {
     public UserLessonProgress toggleLessonCompletion(Long lessonId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
 
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson not found: " + lessonId));
+                .orElseThrow(() -> new RuntimeException("Lecon introuvable: " + lessonId));
 
         UserLessonProgress progress = userLessonProgressRepository
                 .findByUserIdAndLessonId(user.getId(), lesson.getId())
@@ -81,7 +81,7 @@ public class LessonProgressService {
     public List<UserLessonProgress> getMyLessonProgress() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
 
         return userLessonProgressRepository.findByUserId(user.getId());
     }
@@ -89,11 +89,11 @@ public class LessonProgressService {
     public void markLessonIncomplete(Long lessonId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
 
         UserLessonProgress progress = userLessonProgressRepository
                 .findByUserIdAndLessonId(user.getId(), lessonId)
-                .orElseThrow(() -> new RuntimeException("Progress not found"));
+                .orElseThrow(() -> new RuntimeException("Progression introuvable"));
 
         progress.setStatus(UserLessonProgress.Status.IN_PROGRESS);
         progress.setCompletedAt(null);
@@ -128,7 +128,7 @@ public class LessonProgressService {
                 && prevProgress.getStatus() == UserLessonProgress.Status.COMPLETED;
 
         if (!prevCompleted) {
-            throw new IllegalStateException("You must complete the previous lesson first");
+            throw new IllegalStateException("Vous devez d'abord terminer la lecon precedente");
         }
     }
 
@@ -143,8 +143,8 @@ public class LessonProgressService {
 
         if (attemptedExercises < totalExercises) {
             throw new IllegalStateException(
-                    "Complete all exercises before marking this lesson as completed (" +
-                            attemptedExercises + "/" + totalExercises + " done)"
+                    "Terminez tous les exercices avant de marquer cette lecon comme terminee (" +
+                            attemptedExercises + "/" + totalExercises + " faits)"
             );
         }
     }
