@@ -2,6 +2,7 @@ package com.unicodeacademy.backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
@@ -13,6 +14,10 @@ public class RegisterRequest {
     private String email;
 
     @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caracteres")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
+            message = "Le mot de passe doit contenir au moins 8 caracteres, 1 majuscule, 1 minuscule et 1 chiffre"
+    )
     @NotBlank(message = "Le mot de passe est obligatoire")
     private String password;
 

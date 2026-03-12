@@ -6,9 +6,7 @@ import { NotificationsProvider } from "./notifications/NotificationsContext";
 import { ToastProvider } from "./components/ToastProvider";
 import "./index.css";
 
-const DEFAULT_GOOGLE_CLIENT_ID =
-  "568033154132-fp8d7klc9pndgheqk7jjvnt6qtcniije.apps.googleusercontent.com";
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? DEFAULT_GOOGLE_CLIENT_ID;
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 
 const appTree = (
   <NotificationsProvider>
@@ -20,6 +18,10 @@ const appTree = (
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={googleClientId}>{appTree}</GoogleOAuthProvider>
+    {googleClientId ? (
+      <GoogleOAuthProvider clientId={googleClientId}>{appTree}</GoogleOAuthProvider>
+    ) : (
+      appTree
+    )}
   </React.StrictMode>
 );

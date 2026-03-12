@@ -8,7 +8,7 @@ import {
   Lock,
   Trash2,
 } from "lucide-react";
-import { getMyLessonProgress, http } from "../api/http";
+import { getMyLessonProgress, http, type LessonProgressDto } from "../api/http";
 import { getProgressSummary } from "../api/progress";
 import {
   deleteCourseAttachment,
@@ -18,6 +18,7 @@ import {
   type CourseAttachmentDto,
 } from "../api/attachments";
 import { getCurrentUser } from "../api/users";
+import { formatBytes } from "../utils/formatBytes";
 
 type Course = {
   id: number;
@@ -28,6 +29,12 @@ type Course = {
 type Lesson = {
   id: number;
   title: string;
+};
+
+type LessonProgressItem = LessonProgressDto & {
+  lesson?: {
+    id?: number | null;
+  } | null;
 };
 
 export default function CourseDetails() {
@@ -97,8 +104,8 @@ export default function CourseDetails() {
 
           if (lessonProgressRes.status === "fulfilled") {
             const completedIds = lessonProgressRes.value.data
-              .filter((progress: any) => progress.status === "COMPLETED")
-              .map((progress: any) => progress.lessonId ?? progress.lesson?.id)
+              .filter((progress: LessonProgressItem) => progress.status === "COMPLETED")
+              .map((progress: LessonProgressItem) => progress.lessonId ?? progress.lesson?.id)
               .filter((lessonId: number | undefined) => typeof lessonId === "number");
             setCompletedLessonIds(completedIds);
           } else {
@@ -380,20 +387,6 @@ export default function CourseDetails() {
       )}
     </div>
   );
-}
-
-function formatBytes(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let size = value;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
 function isFinalQuizLesson(lesson: Lesson) {

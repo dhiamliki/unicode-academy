@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { googleLoginApi, loginApi } from "../api/auth";
-import { setToken } from "../auth/session";
+import { setAuthTokens } from "../auth/session";
 import "../styles/public-pages.css";
 
 export default function Login() {
@@ -12,11 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const defaultGoogleClientId =
-    "568033154132-fp8d7klc9pndgheqk7jjvnt6qtcniije.apps.googleusercontent.com";
-  const googleLoginEnabled = Boolean(
-    import.meta.env.VITE_GOOGLE_CLIENT_ID ?? defaultGoogleClientId
-  );
+  const googleLoginEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim());
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -29,8 +25,8 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { token } = await loginApi({ email: email.trim(), password });
-      setToken(token);
+      const { token, refreshToken } = await loginApi({ email: email.trim(), password });
+      setAuthTokens(token, refreshToken);
       nav("/dashboard", { replace: true });
     } catch (err: any) {
       const msg =
@@ -53,8 +49,8 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      const { token } = await googleLoginApi({ idToken: credential });
-      setToken(token);
+      const { token, refreshToken } = await googleLoginApi({ idToken: credential });
+      setAuthTokens(token, refreshToken);
       nav("/dashboard", { replace: true });
     } catch (err: any) {
       const msg =

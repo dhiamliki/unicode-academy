@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginApi, registerApi } from "../api/auth";
-import { setToken } from "../auth/session";
+import { registerApi } from "../api/auth";
+import { setAuthTokens } from "../auth/session";
 import "../styles/public-pages.css";
 
 export default function Register() {
@@ -29,8 +29,11 @@ export default function Register() {
       setError("L'email est obligatoire.");
       return;
     }
-    if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caracteres.");
+    const hasStrongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+    if (!hasStrongPassword) {
+      setError(
+        "Le mot de passe doit contenir au moins 8 caracteres, avec 1 majuscule, 1 minuscule et 1 chiffre."
+      );
       return;
     }
     if (password !== confirmPassword) {
@@ -40,14 +43,12 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await registerApi({
+      const { token, refreshToken } = await registerApi({
         username: username.trim(),
         email: email.trim(),
         password,
       });
-
-      const { token } = await loginApi({ email: email.trim(), password });
-      setToken(token);
+      setAuthTokens(token, refreshToken);
       setSuccess("Compte cree. Redirection...");
       nav("/dashboard", { replace: true });
     } catch (err: any) {

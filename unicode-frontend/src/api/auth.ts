@@ -13,10 +13,15 @@ export type RegisterRequest = {
 
 export type AuthResponse = {
   token: string;
+  refreshToken?: string;
 };
 
 export type GoogleLoginRequest = {
   idToken: string;
+};
+
+export type RefreshTokenRequest = {
+  refreshToken: string;
 };
 
 export async function loginApi(data: LoginRequest): Promise<AuthResponse> {
@@ -31,10 +36,15 @@ export async function googleLoginApi(
   return res.data;
 }
 
-export async function registerApi(data: RegisterRequest): Promise<string> {
-  const res = await http.post<string>("/api/auth/register", data, {
-    responseType: "text",
-  });
-  return typeof res.data === "string" ? res.data : "";
+export async function registerApi(data: RegisterRequest): Promise<AuthResponse> {
+  const res = await http.post<AuthResponse>("/api/auth/register", data);
+  return res.data;
+}
+
+export async function refreshTokenApi(
+  data: RefreshTokenRequest
+): Promise<AuthResponse> {
+  const res = await http.post<AuthResponse>("/api/auth/refresh", data);
+  return res.data;
 }
 

@@ -1,5 +1,5 @@
-﻿import axios from "axios";
-import { getToken } from "../auth/session";
+import axios from "axios";
+import { clearAuth, getRefreshToken, getToken, setAuthTokens } from "../auth/session";
 
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
 
@@ -8,6 +8,56 @@ export const http = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+const authRefreshClient = axios.create({
+  baseURL: apiBaseUrl,
+  headers: { "Content-Type": "application/json" },
+});
+
+type AuthRefreshResponse = {
+  token: string;
+  refreshToken?: string;
+};
+
+let refreshTokenRequest: Promise<string | null> | null = null;
+
+function isAuthEndpoint(url?: string) {
+  return typeof url === "string" && url.includes("/api/auth/");
+}
+
+async function getFreshAccessToken(): Promise<string | null> {
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) {
+    return null;
+  }
+
+  if (!refreshTokenRequest) {
+    refreshTokenRequest = authRefreshClient
+      .post<AuthRefreshResponse>("/api/auth/refresh", {
+        refreshToken: currentRefreshToken,
+      })
+      .then((res) => {
+        const nextAccessToken = res.data?.token;
+        if (!nextAccessToken) {
+          clearAuth();
+          return null;
+        }
+
+        const nextRefreshToken = res.data?.refreshToken ?? currentRefreshToken;
+        setAuthTokens(nextAccessToken, nextRefreshToken);
+        return nextAccessToken;
+      })
+      .catch(() => {
+        clearAuth();
+        return null;
+      })
+      .finally(() => {
+        refreshTokenRequest = null;
+      });
+  }
+
+  return refreshTokenRequest;
+}
+
 http.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
@@ -15,6 +65,36 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
+
+http.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error?.config as
+      | (typeof error.config & { _retry?: boolean })
+      | undefined;
+
+    if (
+      error?.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      isAuthEndpoint(originalRequest.url)
+    ) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+    const nextAccessToken = await getFreshAccessToken();
+    if (!nextAccessToken) {
+      return Promise.reject(error);
+    }
+
+    originalRequest.headers = originalRequest.headers ?? {};
+    (originalRequest.headers as Record<string, string>).Authorization =
+      `Bearer ${nextAccessToken}`;
+
+    return http(originalRequest);
+  }
+);
 
 export type LessonProgressDto = {
   lessonId: number | null;
@@ -61,6 +141,3 @@ export const runCode = async (payload: CodeRunRequest) => {
   const res = await http.post<CodeRunResponse>("/api/code/run", payload);
   return res.data;
 };
-
-
-
