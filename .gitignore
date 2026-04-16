@@ -9,10 +9,17 @@ backend/startup-check.log
 *.log
 .DS_Store
 .idea/
-**/application-*.properties
+
+# Ignore ONLY local dev config
+**/application-dev.properties
+
+# Keep test config
 !backend/src/test/resources/application-test.properties
+
+# Env files
 **/*.env
 .env
 .env.*
 !.env.example
+
 local-config.yml
