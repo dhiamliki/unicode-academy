@@ -2,6 +2,7 @@ package com.unicodeacademy.backend.controller;
 
 import com.unicodeacademy.backend.dto.CourseResponse;
 import com.unicodeacademy.backend.dto.LessonResponse;
+import com.unicodeacademy.backend.dto.LessonSummaryDto;
 import com.unicodeacademy.backend.dto.ProgrammingLanguageResponse;
 import com.unicodeacademy.backend.model.Course;
 import com.unicodeacademy.backend.model.Lesson;
@@ -74,6 +75,22 @@ public class CourseController {
                     .map(projection -> toFallbackLessonResponse(projection, fallbackLanguageCode))
                     .collect(Collectors.toList());
         }
+    }
+
+    @GetMapping("/{id}/lessons/summary")
+    public List<LessonSummaryDto> lessonSummariesByCourse(@PathVariable Long id) {
+        courseRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cours introuvable"));
+
+        return lessonRepository.findSummaryByCourseId(id)
+                .stream()
+                .map(lesson -> new LessonSummaryDto(
+                        lesson.getId(),
+                        TextEncodingFixer.fix(lesson.getTitle()),
+                        lesson.getType(),
+                        lesson.getOrderIndex()
+                ))
+                .collect(Collectors.toList());
     }
 
     private CourseResponse toCourseResponse(Course course) {

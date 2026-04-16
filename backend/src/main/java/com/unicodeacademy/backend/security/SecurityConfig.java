@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/error")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/google", "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ai/hint/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/users/avatars/**").permitAll()
                         // Example admin-only protection (e.g. course attachment uploads under /api/admin/**)
                         .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")

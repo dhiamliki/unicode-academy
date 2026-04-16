@@ -1,1114 +1,571 @@
-﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Client, type StompSubscription } from "@stomp/stompjs";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from "react";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { Client, type IMessage } from "@stomp/stompjs";
+import {
+  LoaderCircle,
+  MessageSquareText,
+  Paperclip,
+  SendHorizontal,
+  Wifi,
+  WifiOff,
+  X,
+} from "lucide-react";
 import SockJS from "sockjs-client/dist/sockjs";
-import { jwtDecode } from "jwt-decode";
-import { useLocation } from "react-router-dom";
+import {
+  getChatMessages,
+  getSockJsEndpoint,
+  resolveBackendUrl,
+  uploadChatAttachment,
+  type ChatMessageDto,
+} from "../api/chat";
+import { getCurrentUser } from "../api/users";
 import { getToken } from "../auth/session";
-import { http } from "../api/http";
-import { getCurrentUser, getUsernames } from "../api/users";
-import { useNotifications } from "../notifications/NotificationsContext";
+import { queryKeys } from "../lib/queryKeys";
+import { getErrorMessage } from "../utils/errorMessage";
 
-type ChatMessage = {
-  id: number;
-  userId: number;
-  username: string;
-  senderEmail: string;
-  senderRole?: "ADMIN" | "USER" | string;
-  attachmentUrl?: string;
-  attachmentName?: string;
-  content: string;
-  roomType?: "GLOBAL" | "COURSE";
+type ChatWidgetProps = {
+  variant?: "widget" | "page";
   courseId?: number | null;
-  createdAt: string;
+  roomName?: string;
 };
 
-type RealtimeNotification = {
-  type?: "success" | "error" | "info" | "warning" | string;
-  message?: string;
-  event?: string;
-  courseId?: number;
-  attachmentName?: string;
-  createdAt?: string;
+type ChatConnectionState = "idle" | "connecting" | "connected" | "reconnecting" | "offline";
+
+type RoomScopedMessages = {
+  roomKey: string;
+  messages: ChatMessageDto[];
 };
 
-type ImagePreviewEntry = {
-  url: string;
-  expiresAt: number;
+type RoomScopedConnection = {
+  roomKey: string;
+  state: ChatConnectionState;
 };
 
-type ChatRoom =
-  | { kind: "global" }
-  | { kind: "course"; courseId: number };
-
-type MentionState = {
-  atIndex: number;
-  cursorIndex: number;
-  query: string;
+type RoomScopedDraft = {
+  roomKey: string;
+  value: string;
 };
 
-const apiBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8081").replace(
-  /\/$/,
-  ""
-);
-const wsBaseUrl = (import.meta.env.VITE_WS_URL ?? apiBaseUrl).replace(/\/$/, "");
+type RoomScopedPendingFile = {
+  roomKey: string;
+  file: File | null;
+};
 
-export default function ChatWidget() {
-  const { addNotification } = useNotifications();
-  const location = useLocation();
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [unread, setUnread] = useState(0);
-  const [connected, setConnected] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [imagePreviews, setImagePreviews] = useState<Record<string, ImagePreviewEntry>>({});
-  const [room, setRoom] = useState<ChatRoom>({ kind: "global" });
-  const [currentUsername, setCurrentUsername] = useState("");
-  const [mentionUsernames, setMentionUsernames] = useState<string[]>([]);
-  const [mentionState, setMentionState] = useState<MentionState | null>(null);
-  const [mentionSelectedIndex, setMentionSelectedIndex] = useState(0);
+const WIDGET_MESSAGE_LIMIT = 40;
+const PAGE_MESSAGE_LIMIT = 80;
 
-  const clientRef = useRef<Client | null>(null);
-  const subscriptionRef = useRef<StompSubscription | null>(null);
-  const notificationsSubscriptionRef = useRef<StompSubscription | null>(null);
-  const messagesRef = useRef<HTMLDivElement | null>(null);
-  const openRef = useRef(open);
-  const roomRef = useRef(room);
+export default function ChatWidget({
+  variant = "widget",
+  courseId = null,
+  roomName,
+}: ChatWidgetProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [liveMessagesState, setLiveMessagesState] = useState<RoomScopedMessages>({
+    roomKey: typeof courseId === "number" ? `course-${courseId}` : "global",
+    messages: [],
+  });
+  const [connectionSnapshot, setConnectionSnapshot] = useState<RoomScopedConnection>({
+    roomKey: typeof courseId === "number" ? `course-${courseId}` : "global",
+    state: "idle",
+  });
+  const [draftState, setDraftState] = useState<RoomScopedDraft>({
+    roomKey: typeof courseId === "number" ? `course-${courseId}` : "global",
+    value: "",
+  });
+  const [pendingFileState, setPendingFileState] = useState<RoomScopedPendingFile>({
+    roomKey: typeof courseId === "number" ? `course-${courseId}` : "global",
+    file: null,
+  });
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  const listRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
+  const clientRef = useRef<Client | null>(null);
+  const connectedOnceRef = useRef(false);
 
-  const maxFileSizeBytes = 10 * 1024 * 1024;
-  const imagePreviewTtlMs = 15 * 60 * 1000;
+  const active = variant === "page" || isOpen;
+  const token = getToken();
+  const roomKey = typeof courseId === "number" ? `course-${courseId}` : "global";
+  const historyLimit = variant === "page" ? PAGE_MESSAGE_LIMIT : WIDGET_MESSAGE_LIMIT;
+  const draft = draftState.roomKey === roomKey ? draftState.value : "";
+  const pendingFile = pendingFileState.roomKey === roomKey ? pendingFileState.file : null;
 
-  const currentCourseId = useMemo(() => {
-    const match = location.pathname.match(/^\/courses\/(\d+)$/);
-    if (!match) return null;
-    const parsed = Number(match[1]);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, [location.pathname]);
+  const currentUserQuery = useQuery({
+    queryKey: queryKeys.currentUser,
+    queryFn: getCurrentUser,
+  });
 
-  const roomKey = useMemo(
-    () => (room.kind === "global" ? "global" : `course:${room.courseId}`),
-    [room]
+  const historyQuery = useQuery({
+    queryKey: ["chatMessages", roomKey, historyLimit],
+    queryFn: () =>
+      getChatMessages({
+        limit: historyLimit,
+        courseId,
+      }),
+    enabled: active,
+    staleTime: 0,
+  });
+
+  const topicDestination = useMemo(
+    () => (typeof courseId === "number" ? `/topic/chat/course/${courseId}` : "/topic/chat/global"),
+    [courseId]
   );
+  const sendDestination = useMemo(
+    () => (typeof courseId === "number" ? `/app/chat/course/${courseId}` : "/app/chat/global"),
+    [courseId]
+  );
+  const roomLabel = useMemo(
+    () =>
+      roomName?.trim() ||
+      (typeof courseId === "number" ? `Salon cours ${courseId}` : "Salon global"),
+    [courseId, roomName]
+  );
+  const currentUserEmail = currentUserQuery.data?.email?.trim().toLowerCase() ?? "";
+  const messages = useMemo(() => {
+    const liveMessages = liveMessagesState.roomKey === roomKey ? liveMessagesState.messages : [];
+    return mergeMessages(historyQuery.data ?? [], liveMessages);
+  }, [historyQuery.data, liveMessagesState, roomKey]);
 
-  const currentUserEmail = useMemo(() => {
-    const token = getToken();
-    if (!token) return "";
-    try {
-      const decoded = jwtDecode<Record<string, unknown>>(token);
-      const sub = decoded?.sub;
-      const email = decoded?.email;
-      if (typeof sub === "string" && sub) return sub;
-      if (typeof email === "string" && email) return email;
-      return "";
-    } catch {
-      return "";
-    }
-  }, []);
-
-  const mentionOptions = useMemo(() => {
-    if (!mentionState) return [];
-    const query = mentionState.query.toLowerCase();
-    return mentionUsernames
-      .filter((name) => {
-        const normalized = name.trim().toLowerCase();
-        if (!normalized) return false;
-        if (!query) return true;
-        return normalized.includes(query);
-      })
-      .slice(0, 8);
-  }, [mentionState, mentionUsernames]);
+  const connectionState: ChatConnectionState = !active
+    ? "idle"
+    : !token
+      ? "offline"
+      : connectionSnapshot.roomKey === roomKey && connectionSnapshot.state !== "idle"
+        ? connectionSnapshot.state
+        : "connecting";
+  const canSend =
+    !isUploadingAttachment &&
+    (pendingFile ? Boolean(token) : draft.trim().length > 0 && connectionState === "connected");
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadMentionDirectory() {
-      try {
-        const [me, usernames] = await Promise.all([getCurrentUser(), getUsernames()]);
-        if (cancelled) return;
-        const merged = uniqueUsernames([me.username, ...usernames]);
-        setCurrentUsername(me.username ?? "");
-        setMentionUsernames(merged);
-      } catch {
-        // ignore mention directory failures
-      }
-    }
-
-    loadMentionDirectory();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    roomRef.current = room;
-  }, [room]);
-
-  useEffect(() => {
-    if (!currentCourseId && room.kind === "course") {
-      setRoom({ kind: "global" });
+    if (!active) {
+      connectedOnceRef.current = false;
+      clientRef.current?.deactivate();
+      clientRef.current = null;
       return;
     }
-    if (currentCourseId && room.kind === "course" && room.courseId !== currentCourseId) {
-      setRoom({ kind: "course", courseId: currentCourseId });
-    }
-  }, [currentCourseId, room]);
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!token) {
+      return;
+    }
+
+    let closedByCleanup = false;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(`${wsBaseUrl}/ws`),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
+      webSocketFactory: () => new SockJS(getSockJsEndpoint()),
+      reconnectDelay: 4000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      debug: () => undefined,
+      beforeConnect: () => {
+        const nextToken = getToken();
+        client.connectHeaders = nextToken ? { Authorization: `Bearer ${nextToken}` } : {};
+        setConnectionSnapshot({
+          roomKey,
+          state: connectedOnceRef.current ? "reconnecting" : "connecting",
+        });
       },
       onConnect: () => {
-        setConnected(true);
-        subscribeToRoom(client, roomRef.current);
-        subscribeToNotifications(client);
+        connectedOnceRef.current = true;
+        setConnectionSnapshot({ roomKey, state: "connected" });
+        client.subscribe(topicDestination, (frame) => {
+          handleIncomingMessage(frame, roomKey, setLiveMessagesState);
+        });
       },
-      onDisconnect: () => setConnected(false),
-      onWebSocketClose: () => setConnected(false),
-      onWebSocketError: () => setConnected(false),
-      onStompError: () => setConnected(false),
-      reconnectDelay: 5000,
+      onDisconnect: () => {
+        if (!closedByCleanup) {
+          setConnectionSnapshot({ roomKey, state: "offline" });
+        }
+      },
+      onStompError: () => {
+        setConnectionSnapshot({ roomKey, state: "offline" });
+      },
+      onWebSocketClose: () => {
+        if (!closedByCleanup) {
+          setConnectionSnapshot({
+            roomKey,
+            state: connectedOnceRef.current ? "reconnecting" : "offline",
+          });
+        }
+      },
+      onWebSocketError: () => {
+        setConnectionSnapshot({ roomKey, state: "offline" });
+      },
     });
 
-    client.activate();
     clientRef.current = client;
+    client.activate();
 
     return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
-      }
-      if (notificationsSubscriptionRef.current) {
-        notificationsSubscriptionRef.current.unsubscribe();
-        notificationsSubscriptionRef.current = null;
-      }
-      client.deactivate();
+      closedByCleanup = true;
       clientRef.current = null;
+      void client.deactivate();
     };
-  }, []);
+  }, [active, roomKey, token, topicDestination]);
 
   useEffect(() => {
-    const client = clientRef.current;
-    if (!client || !client.connected) return;
-    subscribeToRoom(client, room);
-    setMessages([]);
-  }, [roomKey]);
+    if (!active || messages.length === 0) {
+      return;
+    }
 
-  useEffect(() => {
-    openRef.current = open;
-    if (!open) return;
-    setUnread(0);
-    setHistoryLoading(true);
-    setMessages([]);
+    const viewport = listRef.current;
+    if (!viewport) {
+      return;
+    }
 
-    let cancelled = false;
-    (async () => {
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [active, messages]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmed = draft.trim();
+    if (!canSend) {
+      return;
+    }
+
+    if (pendingFile) {
+      setIsUploadingAttachment(true);
       try {
-        const url =
-          room.kind === "global"
-            ? "/api/chat/messages?limit=50"
-            : `/api/chat/messages?limit=50&courseId=${room.courseId}`;
-        const res = await http.get<ChatMessage[]>(url);
-        if (!cancelled) {
-          setMessages(res.data);
+        const response = await uploadChatAttachment({
+          file: pendingFile,
+          content: trimmed,
+          courseId,
+        });
+
+        setLiveMessagesState((current) => ({
+          roomKey,
+          messages: mergeMessages(
+            current.roomKey === roomKey ? current.messages : [],
+            [response]
+          ),
+        }));
+        setDraftState({ roomKey, value: "" });
+        setPendingFileState({ roomKey, file: null });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
         }
-      } catch {
-        // ignore history fetch failures
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Envoi du fichier impossible."));
       } finally {
-        if (!cancelled) setHistoryLoading(false);
+        setIsUploadingAttachment(false);
       }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, roomKey, room]);
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    setMentionUsernames((prev) =>
-      uniqueUsernames([...prev, ...messages.map((message) => message.username)])
-    );
-  }, [messages]);
-
-  useEffect(() => {
-    if (!open) return;
-    const el = messagesRef.current;
-    if (el && el.lastElementChild instanceof HTMLElement) {
-      el.lastElementChild.scrollIntoView({ behavior: "smooth", block: "end" });
+      return;
     }
-  }, [messages, open]);
 
-  useEffect(() => {
-    return () => {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current);
-      }
-      Object.values(imagePreviews).forEach((entry) => URL.revokeObjectURL(entry.url));
-    };
-  }, [imagePreviews]);
+    if (connectionState !== "connected" || !clientRef.current?.connected || !trimmed) {
+      return;
+    }
 
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const candidates = messages.filter((m) => {
-      if (!m.attachmentUrl || !m.attachmentName) return false;
-      const key = m.attachmentUrl;
-      return !imagePreviews[key] && isImageFile(m.attachmentName);
+    clientRef.current.publish({
+      destination: sendDestination,
+      body: JSON.stringify({ content: trimmed }),
     });
+    setDraftState({ roomKey, value: "" });
+  }
 
-    if (candidates.length === 0) return;
+  const body = (
+    <section
+      className={`chat-shell ${variant === "page" ? "chat-shell-page" : "chat-shell-widget"}`}
+      aria-label="Chat live"
+    >
+      <div className="chat-shell-header">
+        <div className="chat-shell-copy">
+          <span className="section-kicker">{variant === "page" ? "Discussion" : "Live chat"}</span>
+          <h2 className="chat-shell-title">
+            {variant === "page"
+              ? typeof courseId === "number"
+                ? "Salon de parcours"
+                : "Chat communautaire"
+              : "Salon live"}
+          </h2>
+          <p className="chat-shell-subtitle">
+            {variant === "page"
+              ? typeof courseId === "number"
+                ? "Historique, messages temps reel et pieces jointes lies au parcours courant."
+                : "Canal global relie au backend STOMP existant."
+              : typeof courseId === "number"
+                ? "Messages temps reel relies au salon de ce cours."
+                : "Messages temps reel relies au salon global du backend."}
+          </p>
+        </div>
 
-    let cancelled = false;
-    candidates.forEach(async (message) => {
-      if (!message.attachmentUrl) return;
-      try {
-        const url = resolveAttachmentUrl(message.attachmentUrl);
-        const res = await http.get(url, { responseType: "blob" });
-        if (cancelled) return;
-        if (!res.data || !res.data.type.startsWith("image/")) return;
-        const blobUrl = URL.createObjectURL(res.data);
-        const key = message.attachmentUrl;
-        setImagePreviews((prev) => {
-          if (prev[key]) {
-            URL.revokeObjectURL(blobUrl);
-            return prev;
+        <div className="chat-shell-actions">
+          <span className="chat-room-pill">{roomLabel}</span>
+          <span className={`chat-status-pill chat-status-${connectionState}`}>
+            {connectionState === "connected" ? (
+              <Wifi size={14} strokeWidth={2.2} />
+            ) : connectionState === "connecting" || connectionState === "reconnecting" ? (
+              <LoaderCircle size={14} strokeWidth={2.2} className="chat-spin" />
+            ) : (
+              <WifiOff size={14} strokeWidth={2.2} />
+            )}
+            <span>{formatConnectionLabel(connectionState)}</span>
+          </span>
+          {variant === "widget" ? (
+            <button
+              type="button"
+              className="chat-icon-button"
+              aria-label="Fermer le chat"
+              onClick={() => setIsOpen(false)}
+            >
+              <X size={16} strokeWidth={2.2} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {historyQuery.isError ? (
+        <div className="chat-inline-note">
+          L'historique est indisponible pour le moment, mais les nouveaux messages arrivent en direct.
+        </div>
+      ) : null}
+
+      {connectionState === "offline" ? (
+        <div className="chat-inline-note">
+          La connexion live est indisponible. Le widget retentera automatiquement.
+        </div>
+      ) : null}
+
+      {pendingFile ? (
+        <div
+          className="chat-inline-note"
+          style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
+        >
+          <span>{`Fichier pret : ${pendingFile.name}`}</span>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              setPendingFileState({ roomKey, file: null });
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
+          >
+            Retirer
+          </button>
+        </div>
+      ) : null}
+
+      <div ref={listRef} className="chat-message-list">
+        {historyQuery.isPending && messages.length === 0 ? (
+          <div className="chat-state-card">
+            <LoaderCircle size={18} strokeWidth={2.2} className="chat-spin" />
+            <span>Chargement des derniers messages...</span>
+          </div>
+        ) : messages.length > 0 ? (
+          messages.map((message) => {
+            const isOwnMessage =
+              currentUserEmail.length > 0 &&
+              (message.senderEmail ?? "").trim().toLowerCase() === currentUserEmail;
+
+            return (
+              <article
+                key={getMessageKey(message)}
+                className={`chat-message-row${isOwnMessage ? " is-own" : ""}`}
+              >
+                <div className={`chat-message-bubble${isOwnMessage ? " is-own" : ""}`}>
+                  <div className="chat-message-meta">
+                    <span className="chat-message-author">
+                      {message.username?.trim() || message.senderEmail?.trim() || "Utilisateur"}
+                    </span>
+                    {message.senderRole?.toUpperCase() === "ADMIN" ? (
+                      <span className="chat-role-pill">Admin</span>
+                    ) : null}
+                    <time dateTime={message.createdAt ?? undefined}>
+                      {formatTimestamp(message.createdAt)}
+                    </time>
+                  </div>
+
+                  {message.content?.trim() ? (
+                    <p className="chat-message-content">{message.content.trim()}</p>
+                  ) : null}
+
+                  {message.attachmentUrl ? (
+                    <a
+                      href={resolveBackendUrl(message.attachmentUrl)}
+                      className="chat-attachment-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {message.attachmentName?.trim() || "Piece jointe"}
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="chat-state-card">
+            <MessageSquareText size={18} strokeWidth={2.2} />
+            <span>Aucun message pour l'instant. Lance la discussion.</span>
+          </div>
+        )}
+      </div>
+
+      <form className="chat-composer" onSubmit={handleSubmit}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          style={{ display: "none" }}
+          onChange={(event) =>
+            setPendingFileState({
+              roomKey,
+              file: event.target.files?.[0] ?? null,
+            })
           }
-          return {
-            ...prev,
-            [key]: { url: blobUrl, expiresAt: Date.now() + imagePreviewTtlMs },
-          };
-        });
-      } catch {
-        // ignore preview failures
-      }
-    });
+        />
+        <button
+          type="button"
+          className="chat-icon-button"
+          aria-label="Joindre un fichier"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Paperclip size={16} strokeWidth={2.2} />
+        </button>
+        <input
+          className="chat-input"
+          type="text"
+          value={draft}
+          onChange={(event) => setDraftState({ roomKey, value: event.target.value })}
+          placeholder={pendingFile ? "Ajouter un message avec le fichier..." : "Ecrire un message..."}
+          maxLength={2000}
+        />
+        <button type="submit" className="chat-send-button" disabled={!canSend}>
+          {isUploadingAttachment ? (
+            <LoaderCircle size={16} strokeWidth={2.2} className="chat-spin" />
+          ) : (
+            <SendHorizontal size={16} strokeWidth={2.2} />
+          )}
+          <span>{isUploadingAttachment ? "Envoi..." : "Envoyer"}</span>
+        </button>
+      </form>
+    </section>
+  );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [messages, imagePreviews]);
-
-  function subscribeToRoom(client: Client, targetRoom: ChatRoom) {
-    if (subscriptionRef.current) {
-      subscriptionRef.current.unsubscribe();
-      subscriptionRef.current = null;
-    }
-    const topic =
-      targetRoom.kind === "global"
-        ? "/topic/chat/global"
-        : `/topic/chat/course/${targetRoom.courseId}`;
-    subscriptionRef.current = client.subscribe(topic, (msg) => {
-      const parsed: ChatMessage = JSON.parse(msg.body);
-      setMessages((prev) => [...prev, parsed].slice(-200));
-      if (!openRef.current) {
-        setUnread((count) => count + 1);
-      }
-    });
-  }
-
-  function subscribeToNotifications(client: Client) {
-    if (notificationsSubscriptionRef.current) {
-      notificationsSubscriptionRef.current.unsubscribe();
-      notificationsSubscriptionRef.current = null;
-    }
-
-    notificationsSubscriptionRef.current = client.subscribe("/topic/notifications", (msg) => {
-      let payload: RealtimeNotification | null = null;
-      try {
-        payload = JSON.parse(msg.body) as RealtimeNotification;
-      } catch {
-        payload = null;
-      }
-      if (payload?.event !== "COURSE_ATTACHMENT_UPLOADED") return;
-      if (!payload?.message) return;
-      addNotification({
-        type: normalizeNotificationType(payload.type),
-        message: payload.message,
-        createdAt: payload.createdAt,
-      });
-    });
-  }
-
-  function isImageFile(name: string) {
-    const lower = name.toLowerCase();
-    return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp");
-  }
-
-  function resolveAttachmentUrl(url: string | undefined) {
-    if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    if (url.startsWith("/")) return `${apiBaseUrl}${url}`;
-    return `${apiBaseUrl}/${url}`;
-  }
-
-  function setPreviewFromFile(file: File | null) {
-    if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = null;
-    }
-
-    if (!file || !file.type.startsWith("image/")) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const url = URL.createObjectURL(file);
-    previewUrlRef.current = url;
-    setPreviewUrl(url);
-  }
-
-  function applySelectedFile(file: File | null) {
-    if (!file) return;
-    if (file.size > maxFileSizeBytes) {
-      setError("La taille maximale du fichier est de 10 Mo.");
-      setSelectedFile(null);
-      setPreviewFromFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
-    setError(null);
-    setSelectedFile(file);
-    setPreviewFromFile(file);
-  }
-
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    applySelectedFile(file);
-  }
-
-  function clearSelectedFile() {
-    setSelectedFile(null);
-    setError(null);
-    setPreviewFromFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
-
-  function refreshMentionState(nextValue: string, cursorIndex: number | null) {
-    const mention = getMentionState(nextValue, cursorIndex);
-    setMentionState(mention);
-    if (!mention) {
-      setMentionSelectedIndex(0);
-    }
-  }
-
-  function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const nextValue = event.target.value;
-    setInput(nextValue);
-    refreshMentionState(nextValue, event.target.selectionStart);
-  }
-
-  function handleInputCursorChange(event: React.SyntheticEvent<HTMLInputElement>) {
-    const target = event.currentTarget;
-    refreshMentionState(target.value, target.selectionStart);
-  }
-
-  function applyMention(username: string) {
-    if (!mentionState) return;
-    const beforeMention = input.slice(0, mentionState.atIndex + 1);
-    const afterMention = input.slice(mentionState.cursorIndex);
-    const next = `${beforeMention}${username} ${afterMention}`;
-    const nextCursor = (beforeMention + username + " ").length;
-    setInput(next);
-    setMentionState(null);
-    setMentionSelectedIndex(0);
-    requestAnimationFrame(() => {
-      if (!inputRef.current) return;
-      inputRef.current.focus();
-      inputRef.current.setSelectionRange(nextCursor, nextCursor);
-    });
-  }
-
-  function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (mentionState && mentionOptions.length > 0) {
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        setMentionSelectedIndex((prev) => (prev + 1) % mentionOptions.length);
-        return;
-      }
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        setMentionSelectedIndex((prev) =>
-          prev <= 0 ? mentionOptions.length - 1 : prev - 1
-        );
-        return;
-      }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        const selected = mentionOptions[mentionSelectedIndex] ?? mentionOptions[0];
-        if (selected) {
-          applyMention(selected);
-          return;
-        }
-      }
-      if (event.key === "Escape") {
-        setMentionState(null);
-        setMentionSelectedIndex(0);
-        return;
-      }
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendMessage();
-    }
-  }
-
-  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setIsDragging(true);
-  }
-
-  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setIsDragging(false);
-  }
-
-  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setIsDragging(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      applySelectedFile(file);
-    }
-  }
-
-  async function downloadAttachment(message: ChatMessage) {
-    if (!message.attachmentUrl) return;
-    try {
-      const url = resolveAttachmentUrl(message.attachmentUrl);
-      const res = await http.get(url, { responseType: "blob" });
-      const blobUrl = window.URL.createObjectURL(res.data);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = message.attachmentName ?? "piece-jointe";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch {
-      setError("Echec du telechargement.");
-    }
-  }
-
-  async function sendMessage() {
-    const content = input.trim();
-
-    if (selectedFile) {
-      if (selectedFile.size > maxFileSizeBytes) {
-        setError("La taille maximale du fichier est de 10 Mo.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      if (content) formData.append("content", content);
-      if (room.kind === "course") {
-        formData.append("courseId", String(room.courseId));
-      }
-
-      try {
-        await http.post("/api/chat/attachments", formData, {
-          transformRequest: (data) => data,
-          headers: { "Content-Type": undefined as unknown as string },
-        });
-        setInput("");
-        setMentionState(null);
-        setMentionSelectedIndex(0);
-        clearSelectedFile();
-      } catch (err: unknown) {
-        const maybeErr = err as {
-          response?: { data?: { message?: string } | string };
-          message?: string;
-        };
-        const msg =
-          (typeof maybeErr.response?.data === "object"
-            ? maybeErr.response?.data?.message
-            : maybeErr.response?.data) ??
-          maybeErr.message ??
-          "Echec de l'envoi.";
-        setError(msg);
-      }
-      return;
-    }
-
-    if (!content) return;
-    const client = clientRef.current;
-    if (!client || !client.connected) return;
-
-    const destination =
-      room.kind === "global"
-        ? "/app/chat/global"
-        : `/app/chat/course/${room.courseId}`;
-
-    client.publish({
-      destination,
-      body: JSON.stringify({ content }),
-    });
-    setInput("");
-    setMentionState(null);
-    setMentionSelectedIndex(0);
-  }
-
-  function toggleOpen() {
-    setOpen((prev) => !prev);
-  }
-
-  function formatTime(value: string) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function roomSelectValue() {
-    return room.kind === "global" ? "global" : `course:${room.courseId}`;
-  }
-
-  function onRoomSelectChange(value: string) {
-    if (value === "global") {
-      setRoom({ kind: "global" });
-      return;
-    }
-    if (value.startsWith("course:")) {
-      const parsed = Number(value.split(":")[1]);
-      if (Number.isFinite(parsed)) {
-        setRoom({ kind: "course", courseId: parsed });
-      }
-    }
+  if (variant === "page") {
+    return <div className="chat-page-layout">{body}</div>;
   }
 
   return (
     <>
-      <button
-        onClick={toggleOpen}
-        style={{
-          position: "fixed",
-          right: 20,
-          bottom: 20,
-          minHeight: 48,
-          padding: "0 16px",
-          borderRadius: 999,
-          border: "none",
-          background: "#1f2937",
-          color: "#fff",
-          fontSize: 13,
-          fontWeight: 600,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          whiteSpace: "nowrap",
-          cursor: "pointer",
-          boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
-          zIndex: 1000,
-        }}
-        aria-label="Ouvrir la discussion en direct"
-      >
-        Discussion
-        {unread > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: -4,
-              right: -4,
-              minWidth: 20,
-              height: 20,
-              padding: "0 6px",
-              borderRadius: 10,
-              background: "#e11d48",
-              color: "#fff",
-              fontSize: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {unread}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          style={{
-            position: "fixed",
-            right: 20,
-            bottom: 90,
-            width: 340,
-            maxHeight: 520,
-            background: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            zIndex: 1000,
-            outline: isDragging ? "2px dashed #2563eb" : "none",
-            outlineOffset: isDragging ? -6 : 0,
-          }}
-        >
-          <div
-            style={{
-              padding: "10px 12px",
-              background: "#111827",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                Discussion en direct
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: connected ? "#22c55e" : "#ef4444",
-                    display: "inline-block",
-                  }}
-                />
-              </span>
-              {currentCourseId ? (
-                <select
-                  value={roomSelectValue()}
-                  onChange={(e) => onRoomSelectChange(e.target.value)}
-                  style={{
-                    borderRadius: 6,
-                    border: "1px solid #334155",
-                    background: "#0f172a",
-                    color: "#fff",
-                    padding: "4px 6px",
-                    fontSize: 12,
-                  }}
-                >
-                  <option value="global">Salon general</option>
-                  <option value={`course:${currentCourseId}`}>Discussion du cours</option>
-                </select>
-              ) : (
-                <span style={{ fontSize: 12, color: "#d1d5db" }}>Salon : general</span>
-              )}
-            </div>
-            <button
-              onClick={() => setOpen(false)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: 16,
-              }}
-              aria-label="Fermer la discussion"
-            >
-              X
-            </button>
-          </div>
-
-          <div
-            ref={messagesRef}
-            style={{
-              padding: 12,
-              overflowY: "auto",
-              flex: 1,
-              background: "#f8fafc",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            {historyLoading && (
-              <div style={{ color: "#64748b", fontSize: 13 }}>
-                Chargement de l'historique...
-              </div>
-            )}
-            {!historyLoading && messages.length === 0 && (
-              <div style={{ color: "#64748b", fontSize: 13 }}>
-                Aucun message pour le moment.
-              </div>
-            )}
-            {messages.map((m) => {
-              const isOwnMessage = Boolean(
-                m.senderEmail && m.senderEmail === currentUserEmail
-              );
-              const showAdminBadge = (m.senderRole ?? "").toUpperCase() === "ADMIN";
-
-              return (
-                <div
-                  key={`${m.id}-${m.createdAt}-${m.roomType ?? "GLOBAL"}-${m.courseId ?? "none"}`}
-                  style={{
-                    alignSelf: isOwnMessage ? "flex-end" : "flex-start",
-                    maxWidth: "85%",
-                  }}
-                >
-                  <div
-                    style={{
-                      background: isOwnMessage ? "#2563eb" : "#e2e8f0",
-                      color: isOwnMessage ? "#fff" : "#0f172a",
-                      borderRadius: 10,
-                      padding: "8px 10px",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: isOwnMessage ? "#dbeafe" : "#475569",
-                      }}
-                    >
-                      <strong>
-                        {m.username}
-                        {showAdminBadge ? " | administrateur" : ""}
-                      </strong>{" "}
-                      - {formatTime(m.createdAt)}
-                    </div>
-                    {m.content && renderMessageContent(m.content, isOwnMessage, currentUsername)}
-                  {m.attachmentUrl && m.attachmentName && isImageFile(m.attachmentName) && imagePreviews[m.attachmentUrl] && (
-                    <img
-                      src={imagePreviews[m.attachmentUrl].url}
-                      alt={m.attachmentName}
-                      style={{
-                        marginTop: 6,
-                        width: "100%",
-                        maxHeight: 160,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                      }}
-                    />
-                  )}
-                  {m.attachmentUrl && (
-                    <button
-                      onClick={() => downloadAttachment(m)}
-                      style={{
-                        marginTop: 6,
-                        fontSize: 13,
-                        background: "transparent",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        color: isOwnMessage ? "#dbeafe" : "#1d4ed8",
-                      }}
-                    >
-                      Piece jointe : {m.attachmentName ?? "fichier"}
-                    </button>
-                  )}
-                </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {error && (
-            <div style={{ padding: "0 12px 6px", color: "crimson", fontSize: 12 }}>
-              {error}
-            </div>
-          )}
-
-          {(selectedFile || previewUrl) && (
-            <div
-              style={{
-                padding: "0 12px 8px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                fontSize: 12,
-                color: "#334155",
-              }}
-            >
-              {previewUrl && (
-                <img
-                  src={previewUrl}
-                  alt="Apercu"
-                  style={{
-                    width: "100%",
-                    maxHeight: 140,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid #e2e8f0",
-                  }}
-                />
-              )}
-              {selectedFile && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {selectedFile.name}
-                  </span>
-                  <button
-                    onClick={clearSelectedFile}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      color: "#ef4444",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Retirer
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {mentionState && mentionOptions.length > 0 && (
-            <div
-              style={{
-                borderTop: "1px solid #e2e8f0",
-                background: "#fff",
-                padding: "8px 10px",
-                display: "grid",
-                gap: 6,
-                maxHeight: 152,
-                overflowY: "auto",
-              }}
-            >
-              <p style={{ margin: 0, fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-                Mentionner quelqu'un
-              </p>
-              {mentionOptions.map((name, idx) => {
-                const active = idx === mentionSelectedIndex;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => applyMention(name)}
-                    style={{
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 8,
-                      background: active ? "#e0f2fe" : "#fff",
-                      color: active ? "#075985" : "#0f172a",
-                      textAlign: "left",
-                      padding: "6px 8px",
-                      fontSize: 13,
-                      cursor: "pointer",
-                    }}
-                  >
-                    @{name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <div
-            style={{
-              padding: 10,
-              display: "flex",
-              gap: 8,
-              borderTop: "1px solid #e2e8f0",
-              background: "#fff",
-            }}
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={handleInputChange}
-              onClick={handleInputCursorChange}
-              onKeyUp={handleInputCursorChange}
-              placeholder={isDragging ? "Deposez un fichier a joindre" : "Ecrire un message..."}
-              onKeyDown={handleInputKeyDown}
-              style={{
-                flex: 1,
-                border: "1px solid #cbd5f5",
-                borderRadius: 8,
-                padding: "8px 10px",
-                fontSize: 14,
-              }}
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: "1px solid #cbd5f5",
-                background: "#fff",
-                color: "#1f2937",
-                width: 38,
-                height: 38,
-                borderRadius: 8,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              aria-label="Joindre un fichier"
-              title="Joindre un fichier"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M7 13.5L14.5 6a4 4 0 115.66 5.66l-8.49 8.49a6 6 0 11-8.48-8.49l9.9-9.9"
-                  stroke="#1f2937"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={sendMessage}
-              style={{
-                border: "none",
-                background: "#2563eb",
-                color: "#fff",
-                padding: "8px 12px",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontSize: 14,
-              }}
-            >
-              Envoyer
-            </button>
-          </div>
+      {isOpen ? (
+        <div className="chat-widget-panel" role="dialog" aria-modal="false">
+          {body}
         </div>
+      ) : (
+        <button
+          type="button"
+          className="chat-launcher"
+          onClick={() => setIsOpen(true)}
+          aria-label="Ouvrir le chat live"
+        >
+          <MessageSquareText size={18} strokeWidth={2.2} />
+          <span>Chat live</span>
+        </button>
       )}
     </>
   );
 }
 
-function uniqueUsernames(values: string[]) {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const value of values) {
-    const trimmed = (value ?? "").trim();
-    if (!trimmed) continue;
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(trimmed);
-  }
-  return result.sort((a, b) => a.localeCompare(b));
-}
-
-function getMentionState(value: string, cursorIndex: number | null): MentionState | null {
-  const safeCursor = Math.max(0, Math.min(cursorIndex ?? value.length, value.length));
-  const beforeCursor = value.slice(0, safeCursor);
-  const atIndex = beforeCursor.lastIndexOf("@");
-  if (atIndex < 0) return null;
-  if (atIndex > 0 && !/\s/.test(beforeCursor[atIndex - 1])) {
-    return null;
-  }
-
-  const mentionQuery = beforeCursor.slice(atIndex + 1);
-  if (mentionQuery.includes(" ")) {
-    return null;
-  }
-  if (!/^[A-Za-z0-9._-]*$/.test(mentionQuery)) {
-    return null;
-  }
-
-  return {
-    atIndex,
-    cursorIndex: safeCursor,
-    query: mentionQuery,
-  };
-}
-
-function normalizeNotificationType(type: string | undefined): "success" | "error" | "info" | "warning" {
-  const normalized = (type ?? "").toLowerCase();
-  if (normalized === "success") return "success";
-  if (normalized === "error") return "error";
-  if (normalized === "warning") return "warning";
-  return "info";
-}
-
-function renderMessageContent(content: string, isOwnMessage: boolean, currentUsername: string): ReactNode {
-  const mentionRegex = /(^|\s)(@[A-Za-z0-9._-]+)/g;
-  const nodes: ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let key = 0;
-
-  while ((match = mentionRegex.exec(content)) !== null) {
-    const prefix = match[1] ?? "";
-    const mentionToken = match[2] ?? "";
-    const start = match.index;
-    const mentionStart = start + prefix.length;
-
-    if (start > lastIndex) {
-      nodes.push(content.slice(lastIndex, start));
-    }
-    if (prefix) {
-      nodes.push(prefix);
+function handleIncomingMessage(
+  frame: IMessage,
+  roomKey: string,
+  setLiveMessagesState: Dispatch<SetStateAction<RoomScopedMessages>>
+) {
+  try {
+    const parsed = JSON.parse(frame.body) as ChatMessageDto;
+    if (!parsed || typeof parsed !== "object") {
+      return;
     }
 
-    const mentionName = mentionToken.slice(1).toLowerCase();
-    const isCurrentUserMention =
-      mentionName.length > 0 &&
-      mentionName === (currentUsername ?? "").trim().toLowerCase();
-
-    nodes.push(
-      <span
-        key={`mention-${key++}`}
-        style={{
-          borderRadius: 6,
-          padding: "0 4px",
-          fontWeight: isCurrentUserMention ? 700 : 600,
-          background: isCurrentUserMention
-            ? isOwnMessage
-              ? "rgba(254,240,138,0.35)"
-              : "#fef3c7"
-            : isOwnMessage
-              ? "rgba(219,234,254,0.28)"
-              : "#dbeafe",
-          color: isCurrentUserMention
-            ? isOwnMessage
-              ? "#fef9c3"
-              : "#92400e"
-            : isOwnMessage
-              ? "#dbeafe"
-              : "#1d4ed8",
-        }}
-      >
-        {mentionToken}
-      </span>
-    );
-
-    lastIndex = mentionStart + mentionToken.length;
+    setLiveMessagesState((current) => ({
+      roomKey,
+      messages: mergeMessages(current.roomKey === roomKey ? current.messages : [], [parsed]),
+    }));
+  } catch {
+    // Ignore malformed frames to keep the UI stable.
   }
-
-  if (lastIndex < content.length) {
-    nodes.push(content.slice(lastIndex));
-  }
-
-  return (
-    <div style={{ fontSize: 14, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-      {nodes.length === 0 ? content : nodes}
-    </div>
-  );
 }
 
+function mergeMessages(...collections: ChatMessageDto[][]) {
+  const map = new Map<string, ChatMessageDto>();
+
+  collections.flat().forEach((message) => {
+    map.set(getMessageKey(message), message);
+  });
+
+  return Array.from(map.values()).sort(compareMessages);
+}
+
+function compareMessages(left: ChatMessageDto, right: ChatMessageDto) {
+  const timeDiff = getMessageTimestamp(left) - getMessageTimestamp(right);
+  if (timeDiff !== 0) {
+    return timeDiff;
+  }
+
+  return (left.id ?? 0) - (right.id ?? 0);
+}
+
+function getMessageTimestamp(message: ChatMessageDto) {
+  if (!message.createdAt) {
+    return 0;
+  }
+
+  const timestamp = new Date(message.createdAt).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function getMessageKey(message: ChatMessageDto) {
+  if (typeof message.id === "number") {
+    return `chat-message-${message.id}`;
+  }
+
+  return [
+    message.senderEmail ?? "unknown",
+    message.createdAt ?? "unknown",
+    message.content ?? "empty",
+    message.attachmentUrl ?? "no-file",
+  ].join(":");
+}
+
+function formatConnectionLabel(state: ChatConnectionState) {
+  switch (state) {
+    case "connected":
+      return "En ligne";
+    case "connecting":
+      return "Connexion";
+    case "reconnecting":
+      return "Reconnexion";
+    case "offline":
+      return "Hors ligne";
+    default:
+      return "En attente";
+  }
+}
+
+function formatTimestamp(value: string | null) {
+  if (!value) {
+    return "Maintenant";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Maintenant";
+  }
+
+  return date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

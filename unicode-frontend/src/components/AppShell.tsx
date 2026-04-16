@@ -1,541 +1,682 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  Bell,
-  BookOpenText,
-  ChevronDown,
-  Home,
-  Languages,
-  LogOut,
-  Menu,
-  Paperclip,
-  Search,
-  Settings,
-  Shield,
-  Trophy,
-  Upload,
-  UserRound,
-  X,
-} from "lucide-react";
-import { clearAuth } from "../auth/session";
-import { useNotifications } from "../notifications/NotificationsContext";
-import { getCurrentUser, type CurrentUserDto } from "../api/users";
-import { languageShortcuts } from "../utils/languageVisuals";
-
-const apiBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8081").replace(/\/$/, "");
-
-const sidebarLinks = [
-  { to: "/dashboard", label: "Tableau de bord", icon: Home },
-  { to: "/search", label: "Recherche", icon: Search },
-  { to: "/courses", label: "Cours", icon: BookOpenText },
-  { to: "/attachments", label: "Pieces jointes", icon: Paperclip },
-  { to: "/leaderboard", label: "Classement", icon: Trophy },
-  { to: "/profile", label: "Profil", icon: UserRound },
-];
-
-const topLinks = [
-  { to: "/search", label: "Recherche" },
-  { to: "/courses", label: "Cours" },
-  { to: "/leaderboard", label: "Classement" },
-  { to: "/profile", label: "Profil" },
-];
-
-function formatTime(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString();
-}
+import ChatWidget from "./ChatWidget";
+import LanguageIcon from "./LanguageIcon";
+import { getMyLessonProgress, type LessonProgressDto } from "../api/http";
+import { getProgressSummary } from "../api/progress";
+import { getCurrentUser } from "../api/users";
+import { endAuthenticatedSession } from "../auth/authState";
+import { computeStreak, countTodayCompleted, getInitials } from "../lib/academy";
+import { queryKeys } from "../lib/queryKeys";
+import { getRecentLessons } from "../utils/recentLessons";
 
 type AppShellProps = {
   children: ReactNode;
 };
 
+type SearchResult = {
+  id: string;
+  title: string;
+  meta: string;
+  to: string;
+};
+
+type Breadcrumb = {
+  label: string;
+  current?: boolean;
+};
+
+type ResumeTarget = {
+  title: string;
+  subtitle: string;
+  to: string;
+  languageCode: string;
+};
+
+const navigationItems = [
+  { label: "Accueil", to: "/accueil", icon: "\u2302", end: true, meta: "Navigation" },
+  { label: "Apprendre", to: "/apprendre", icon: "\u25CE", end: false, meta: "Navigation" },
+] as const;
+
+const accountItems = [
+  { label: "Profil", to: "/profil", icon: "\uD83D\uDC64", end: false, meta: "Compte" },
+  { label: "Parametres", to: "/parametres", icon: "\u2699", end: false, meta: "Compte" },
+] as const;
+
+const utilityItems = [
+  { label: "Chat", to: "/chat", meta: "Secondaire" },
+  { label: "Classement", to: "/classement", meta: "Secondaire" },
+] as const;
+
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
+
 export default function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<CurrentUserDto | null>(null);
-  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const profileRef = useRef<HTMLDivElement | null>(null);
-  const notifRef = useRef<HTMLDivElement | null>(null);
-  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
-  const {
-    notifications,
-    markAllRead,
-    clearAll,
-    deleteMany,
-    toggleRead,
-    toggleSelected,
-  } = useNotifications();
+  const currentUserQuery = useQuery({
+    queryKey: queryKeys.currentUser,
+    queryFn: getCurrentUser,
+  });
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  const progressQuery = useQuery({
+    queryKey: queryKeys.progress,
+    queryFn: getProgressSummary,
+  });
 
-  const selectedIds = useMemo(
-    () => notifications.filter((n) => n.selected).map((n) => n.id),
-    [notifications]
-  );
-
-  const isAdmin = (currentUser?.role ?? "").toUpperCase() === "ADMIN";
-
-  const navItems = useMemo(
-    () =>
-      isAdmin
-        ? [...sidebarLinks, { to: "/admin/users", label: "Administration", icon: Shield }]
-        : sidebarLinks,
-    [isAdmin]
-  );
-
-  const topNavItems = useMemo(
-    () =>
-      isAdmin
-        ? [...topLinks, { to: "/admin/users", label: "Administration" }]
-        : topLinks,
-    [isAdmin]
-  );
-
-  const pageTitle = useMemo(() => {
-    if (location.pathname.startsWith("/dashboard")) return "Tableau de bord";
-    if (location.pathname.startsWith("/search")) return "Recherche";
-    if (location.pathname.startsWith("/courses")) return "Cours";
-    if (location.pathname.startsWith("/attachments")) return "Pieces jointes";
-    if (location.pathname.startsWith("/lessons")) return "Lecon";
-    if (location.pathname.startsWith("/leaderboard")) return "Classement";
-    if (location.pathname.startsWith("/profile")) return "Profil";
-    if (location.pathname.startsWith("/account")) return "Compte";
-    if (location.pathname.startsWith("/admin")) return "Administration";
-    return "UniCode";
-  }, [location.pathname]);
-
-  const activeLanguageFilter = useMemo(
-    () => new URLSearchParams(location.search).get("language")?.toLowerCase() ?? "",
-    [location.search]
-  );
-  const avatarUrl = useMemo(
-    () => resolveAssetUrl(currentUser?.avatarUrl),
-    [currentUser?.avatarUrl]
-  );
+  const lessonProgressQuery = useQuery({
+    queryKey: queryKeys.lessonProgress,
+    queryFn: getMyLessonProgress,
+  });
 
   useEffect(() => {
-    let cancelled = false;
+    function openSearch() {
+      setSearchValue("");
+      setSearchOpen(true);
+      setAccountMenuOpen(false);
+    }
 
-    async function loadCurrentUser() {
-      try {
-        const me = await getCurrentUser();
-        if (!cancelled) {
-          setCurrentUser(me);
-        }
-      } catch {
-        if (!cancelled) {
-          setCurrentUser(null);
-        }
+    function closeSearch() {
+      setSearchOpen(false);
+      setSearchValue("");
+    }
+
+    function handleKey(event: KeyboardEvent) {
+      const isShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+      if (isShortcut) {
+        event.preventDefault();
+        openSearch();
+      }
+
+      if (event.key === "Escape") {
+        closeSearch();
+        setAccountMenuOpen(false);
       }
     }
 
-    loadCurrentUser();
-    return () => {
-      cancelled = true;
-    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
   useEffect(() => {
-    function onMouseDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (profileRef.current && !profileRef.current.contains(target)) {
-        setProfileOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(target)) {
-        setNotifOpen(false);
-      }
+    if (!searchOpen) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchOpen]);
+  useEffect(() => {
+    if (!accountMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
       if (
-        sidebarOpen &&
-        sidebarRef.current &&
-        !sidebarRef.current.contains(target)
+        accountMenuRef.current &&
+        event.target instanceof Node &&
+        !accountMenuRef.current.contains(event.target)
       ) {
-        setSidebarOpen(false);
+        setAccountMenuOpen(false);
       }
     }
 
-    function onEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setProfileOpen(false);
-        setNotifOpen(false);
-        setSidebarOpen(false);
-      }
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, [accountMenuOpen]);
+
+  const currentUser = currentUserQuery.data;
+  const resolvedAvatarUrl = resolveAvatarUrl(currentUser?.avatarUrl);
+  const progressSummary = progressQuery.data;
+  const lessonProgress = useMemo(
+    () => ((lessonProgressQuery.data?.data ?? []) as LessonProgressDto[]),
+    [lessonProgressQuery.data?.data]
+  );
+  const recentLessons = getRecentLessons();
+
+  const isAdmin = (currentUser?.role ?? "").toUpperCase() === "ADMIN";
+  const streak = lessonProgress.length > 0 ? computeStreak(lessonProgress) : 0;
+  const completedToday = lessonProgress.length > 0 ? countTodayCompleted(lessonProgress) : 0;
+  const courseCount = progressSummary?.courses.length ?? 0;
+  const completedLessons = progressSummary?.totals.completedLessons ?? 0;
+  const completedExercises = progressSummary?.totals.correctExercises ?? 0;
+  const activeCourseCount = (progressSummary?.courses ?? []).filter(
+    (course) => course.percentage > 0 && course.percentage < 100
+  ).length;
+  const preferredLanguage = resolvePreferredLanguage(currentUser);
+  const breadcrumb = useMemo(() => buildBreadcrumbs(location.pathname), [location.pathname]);
+  const resumeTarget = useMemo(() => buildResumeTarget(recentLessons), [recentLessons]);
+  const lastActivityLabel = useMemo(() => formatLastActivity(lessonProgress), [lessonProgress]);
+  const showChatWidget = !location.pathname.startsWith("/chat");
+  const sidebarCopy = useMemo(
+    () => buildSidebarCopy(completedToday, lastActivityLabel, streak),
+    [completedToday, lastActivityLabel, streak]
+  );
+
+  const searchResults = useMemo(() => {
+    const baseResults: SearchResult[] = [
+      ...navigationItems.map((item) => ({
+        id: item.to,
+        title: item.label,
+        meta: item.meta,
+        to: item.to,
+      })),
+      ...accountItems.map((item) => ({
+        id: item.to,
+        title: item.label,
+        meta: item.meta,
+        to: item.to,
+      })),
+      ...utilityItems.map((item) => ({
+        id: item.to,
+        title: item.label,
+        meta: item.meta,
+        to: item.to,
+      })),
+      ...(resumeTarget
+        ? [
+            {
+              id: `${resumeTarget.to}-resume`,
+              title: "Reprendre",
+              meta: resumeTarget.title,
+              to: resumeTarget.to,
+            },
+          ]
+        : []),
+      ...(isAdmin
+        ? [{ id: "/admin", title: "Administration", meta: "Admin", to: "/admin" }]
+        : []),
+    ];
+
+    const normalized = searchValue.trim().toLowerCase();
+    if (!normalized) {
+      return baseResults;
     }
 
-    document.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("keydown", onEscape);
+    return baseResults.filter((item) =>
+      `${item.title} ${item.meta}`.toLowerCase().includes(normalized)
+    );
+  }, [isAdmin, resumeTarget, searchValue]);
 
-    return () => {
-      document.removeEventListener("mousedown", onMouseDown);
-      document.removeEventListener("keydown", onEscape);
-    };
-  }, [sidebarOpen]);
+  function handleMenuNavigate(to: string) {
+    setAccountMenuOpen(false);
+    navigate(to);
+  }
 
-  useEffect(() => {
-    setProfileOpen(false);
-    setNotifOpen(false);
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  function openSearch() {
+    setSearchValue("");
+    setSearchOpen(true);
+    setAccountMenuOpen(false);
+  }
 
-  useEffect(() => {
-    setAvatarLoadFailed(false);
-  }, [avatarUrl]);
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchValue("");
+  }
 
-  function logout() {
-    clearAuth();
+  function handleLogout() {
+    setAccountMenuOpen(false);
+    endAuthenticatedSession();
     navigate("/login", { replace: true });
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)]">
-      <div
-        className={`fixed inset-0 z-30 bg-slate-950/45 transition-opacity lg:hidden ${
-          sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      />
+    <div className="shell">
+      <aside className="app-sidebar" aria-label="Navigation principale">
+        <Link to="/accueil" className="sidebar-brand" aria-label="UniCode Academy">
+          <span className="sidebar-logo">U</span>
+          <span className="sidebar-wordmark">
+            <span>Uni</span>
+            <span>Code</span>
+          </span>
+        </Link>
 
-      <aside
-        ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col overflow-y-auto bg-[var(--color-sidebar-dark)] px-4 py-6 text-slate-300 shadow-[0_20px_38px_rgba(2,6,23,0.5)] transition-transform duration-200 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="mb-8 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-semibold text-white">
-              U
-            </span>
-            <div>
-              <p className="text-sm font-semibold tracking-wide text-slate-100">UniCode</p>
-              <p className="text-xs text-slate-400/90">Plateforme d'apprentissage</p>
+        <div className="sidebar-body">
+          <section className="sidebar-panel sidebar-panel-progress">
+            <div className="sidebar-panel-head">
+              <span className="sidebar-panel-title">Progression</span>
+              <span className="sidebar-mini-chip">{`${completedToday} ajd`}</span>
             </div>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(false)}
-            className="rounded-lg p-1 text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-100 lg:hidden"
-            aria-label="Fermer la barre laterale"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        <nav className="space-y-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+            <div className="sidebar-panel-metrics">
+              <div className="sidebar-panel-metric">
+                <strong>{completedLessons}</strong>
+                <span>lecons</span>
+              </div>
+              <div className="sidebar-panel-metric">
+                <strong>{completedExercises}</strong>
+                <span>exercices</span>
+              </div>
+            </div>
 
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={[
-                  "group relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition",
-                  isActive
-                    ? "bg-[var(--color-sidebar-hover)] text-white"
-                    : "text-slate-300 hover:bg-[var(--color-sidebar-hover)] hover:text-slate-100",
-                ].join(" ")}
-              >
-                <span
-                  className={`absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full ${
-                    isActive ? "bg-[var(--color-primary)]" : "bg-transparent"
-                  }`}
-                />
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            );
-          })}
-        </nav>
+            <p className="sidebar-panel-copy">{sidebarCopy}</p>
 
-        <div className="mt-8">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            <Languages className="h-4 w-4" />
-            Raccourcis langues
-          </div>
-          <div className="space-y-2">
-            {languageShortcuts.map((language) => {
-              const isSelected =
-                location.pathname.startsWith("/courses") &&
-                activeLanguageFilter === language.code.toLowerCase();
-              return (
-                <Link
-                  key={language.code}
-                  to={`/courses?language=${language.code}`}
-                  className={`flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium transition ${
-                    isSelected
-                      ? "bg-teal-500/15 text-teal-100"
-                      : "bg-white/[0.03] text-slate-200 hover:bg-white/[0.07] hover:text-white"
-                  }`}
+            <div className="sidebar-meta-pills">
+              <span className="sidebar-meta-pill">
+                {preferredLanguage ?? `${activeCourseCount} parcours actifs`}
+              </span>
+              <span className="sidebar-meta-pill">
+                {courseCount > 0 ? `${courseCount} parcours suivis` : "Aucun parcours"}
+              </span>
+            </div>
+          </section>
+
+          <div className="sidebar-section">
+            <div className="sidebar-label">Navigation</div>
+            <nav className="sidebar-nav">
+              {navigationItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
                 >
-                  <span
-                    className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${
-                      isSelected ? "bg-white/[0.16]" : "bg-white/[0.08]"
-                    }`}
-                  >
-                    <img
-                      src={language.image}
-                      alt={`Logo ${language.label}`}
-                      loading="lazy"
-                      className="h-4 w-4 object-contain"
-                    />
-                  </span>
-                  <span className="truncate">{language.label}</span>
-                </Link>
-              );
-            })}
+                  <span aria-hidden="true">{item.icon}</span>
+                  <span>{item.label}</span>
+                  {item.to === "/apprendre" ? (
+                    <span className="sidebar-link-badge">{courseCount}</span>
+                  ) : null}
+                </NavLink>
+              ))}
+            </nav>
           </div>
-        </div>
 
-        {isAdmin && (
-          <div className="mt-8 rounded-xl border border-teal-400/45 bg-teal-500/[0.11] p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal-200">
-              Espace admin
-            </p>
-            <p className="mt-1 text-xs text-teal-100/90">
-              Gerer les utilisateurs et televerser les pieces jointes des cours.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link to="/admin/users" className="btn-primary w-full justify-center gap-1.5 px-3 py-1.5 text-xs">
-                <Shield className="h-3.5 w-3.5" />
-                Utilisateurs
-              </Link>
-              <Link to="/attachments" className="btn-secondary w-full justify-center gap-1.5 px-3 py-1.5 text-xs !border-white/25 !bg-white/[0.08] !text-white hover:!bg-white/[0.12]">
-                <Upload className="h-3.5 w-3.5" />
-                Fichiers
-              </Link>
+          <div className="sidebar-section">
+            <div className="sidebar-label">Compte</div>
+            <nav className="sidebar-nav">
+              {accountItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+                >
+                  <span aria-hidden="true">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <div className="sidebar-section">
+            <div className="sidebar-label">Outils</div>
+            <nav className="sidebar-nav">
+              {utilityItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/chat"}
+                  className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+                >
+                  <span aria-hidden="true">{item.to === "/chat" ? "\u25A1" : "\u2605"}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          {isAdmin ? (
+            <div className="sidebar-section">
+              <div className="sidebar-label">Admin</div>
+              <nav className="sidebar-nav">
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
+                >
+                  <span aria-hidden="true">{`\u25C6`}</span>
+                  <span>Administration</span>
+                </NavLink>
+              </nav>
             </div>
-          </div>
-        )}
+          ) : null}
 
-        <div className="mt-auto rounded-xl border border-white/[0.11] bg-white/[0.05] p-3">
-          <p className="text-xs text-slate-400">Connecte en tant que</p>
-          <p className="truncate text-sm font-semibold text-slate-100">
-            {currentUser?.username ?? "Utilisateur"}
-          </p>
+          <section className="sidebar-panel sidebar-panel-resume">
+            <div className="sidebar-panel-head">
+              <span className="sidebar-panel-title">Reprendre</span>
+              <span className="sidebar-mini-chip accent">
+                {resumeTarget ? "Derniere" : "Parcours"}
+              </span>
+            </div>
+
+            <Link to={resumeTarget?.to ?? "/apprendre"} className="sidebar-resume-card">
+              <span className="sidebar-resume-icon" aria-hidden="true">
+                <LanguageIcon code={resumeTarget?.languageCode} size={20} />
+              </span>
+              <span className="sidebar-resume-copy">
+                <strong>{resumeTarget?.title ?? "Choisir un parcours"}</strong>
+                <span>
+                  {resumeTarget?.subtitle ??
+                    "Retrouve ton prochain point d'entree depuis la carte des parcours."}
+                </span>
+              </span>
+            </Link>
+          </section>
+
+          <div className="sidebar-spacer" />
+
+          <section className="sidebar-help-card">
+            <p className="sidebar-help-title">Recherche rapide</p>
+            <p className="sidebar-help-copy">
+              Utilise Ctrl + K pour retrouver une page ou revenir directement sur ton point de reprise.
+            </p>
+            <Link to="/apprendre" className="sidebar-help-link">
+              Ouvrir les parcours
+            </Link>
+          </section>
+
+          <Link to="/profil" className="sidebar-user">
+            <span className="sidebar-user-avatar">{getInitials(currentUser?.username ?? "U")}</span>
+            <span className="sidebar-user-copy">
+              <span className="sidebar-user-name">{currentUser?.username ?? "Chargement"}</span>
+              <span className="sidebar-user-role">{preferredLanguage ?? formatRoleLabel(currentUser?.role)}</span>
+            </span>
+            <span className="sidebar-user-dots" aria-hidden="true">
+              {`\u22EF`}
+            </span>
+          </Link>
         </div>
       </aside>
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(true)}
-                className="rounded-lg p-2 text-[var(--color-text-muted)] transition hover:bg-teal-50 hover:text-[var(--color-primary-dark)] lg:hidden"
-                aria-label="Ouvrir la barre laterale"
+      <div className="shell-main">
+        <header className="app-topbar">
+          <div className="topbar-breadcrumb">
+            {breadcrumb.map((item, index) => (
+              <span
+                key={`${item.label}-${index}`}
+                className={item.current ? "breadcrumb-current" : undefined}
               >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">Espace</p>
-                <h1 className="text-base font-semibold text-[var(--color-text-primary)]">{pageTitle}</h1>
-              </div>
+                {index > 0 ? "\u203A " : ""}
+                {item.label}
+              </span>
+            ))}
+          </div>
+
+          <button type="button" className="topbar-search" onClick={openSearch}>
+            <span aria-hidden="true">{`\uD83D\uDD0D`}</span>
+            <span className="topbar-search-label">Rechercher...</span>
+            <span className="topbar-search-kbd">Ctrl K</span>
+          </button>
+
+          <div className="topbar-actions">
+            <div className="topbar-stats" aria-label="Statistiques rapides">
+              <span className="topbar-stat">{`Aujourd'hui ${completedToday}`}</span>
+              <span className="topbar-stat">{`Lecons ${completedLessons}`}</span>
             </div>
 
-            <nav className="hidden items-center gap-1 rounded-full border border-[var(--color-border)] bg-white p-1 md:flex">
-              {topNavItems.map((link) => {
-                const isActive =
-                  location.pathname === link.to ||
-                  location.pathname.startsWith(`${link.to}/`);
-                return (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    className={[
-                      "rounded-full px-3.5 py-1.5 text-sm font-medium transition",
-                      isActive
-                        ? "bg-teal-500/15 text-[var(--color-primary-dark)]"
-                        : "text-[var(--color-text-muted)] hover:bg-slate-100 hover:text-[var(--color-text-primary)]",
-                    ].join(" ")}
-                  >
-                    {link.label}
-                  </NavLink>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <div ref={notifRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNotifOpen((prev) => !prev);
-                    setProfileOpen(false);
-                  }}
-                  aria-label="Notifications"
-                  className="relative rounded-xl border border-[var(--color-border)] bg-white p-2 text-[var(--color-text-muted)] transition hover:bg-slate-50 hover:text-[var(--color-text-primary)]"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-semibold text-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {notifOpen && (
-                  <div className="absolute right-0 top-12 z-30 w-80 rounded-[14px] border border-[var(--color-border)] bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.12)]">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                      <span className="text-xs text-[var(--color-text-muted)]">{notifications.length}</span>
-                    </div>
-
-                    {notifications.length === 0 ? (
-                      <p className="rounded-lg bg-slate-50 p-3 text-sm text-[var(--color-text-muted)]">
-                        Aucune notification pour le moment.
-                      </p>
-                    ) : (
-                      <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`rounded-lg border p-2 ${
-                              notification.read
-                                ? "border-[var(--color-border)] bg-white"
-                                : "border-teal-100 bg-teal-50"
-                            }`}
-                          >
-                            <div className="flex items-start gap-2">
-                              <input
-                                type="checkbox"
-                                checked={notification.selected}
-                                onChange={() => toggleSelected(notification.id)}
-                                className="mt-1 h-4 w-4 rounded border-slate-300"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => toggleRead(notification.id)}
-                                className="flex-1 text-left"
-                              >
-                                <p
-                                  className={`text-sm ${
-                                    notification.read
-                                      ? "font-normal text-slate-700"
-                                      : "font-semibold text-slate-900"
-                                  }`}
-                                >
-                                  {notification.message}
-                                </p>
-                                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                                  {formatTime(notification.createdAt)}
-                                </p>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteMany([notification.id])}
-                                className="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                                aria-label="Supprimer la notification"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" onClick={markAllRead} className="btn-secondary px-3 py-1.5 text-xs">
-                        Tout marquer lu
-                      </button>
-                      <button type="button" onClick={clearAll} className="btn-secondary px-3 py-1.5 text-xs">
-                        Tout effacer
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteMany(selectedIds)}
-                        className="btn-secondary px-3 py-1.5 text-xs"
-                        disabled={selectedIds.length === 0}
-                      >
-                        Supprimer la selection
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div ref={profileRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileOpen((prev) => !prev);
-                    setNotifOpen(false);
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
-                >
-                  {avatarUrl && !avatarLoadFailed ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar du profil"
-                      className="h-7 w-7 rounded-full border border-slate-200 object-cover"
-                      onError={() => setAvatarLoadFailed(true)}
-                    />
+            <div className="account-menu" ref={accountMenuRef}>
+              <button
+                type="button"
+                className={`account-menu-trigger${accountMenuOpen ? " is-open" : ""}`}
+                aria-haspopup="menu"
+                aria-expanded={accountMenuOpen}
+                onClick={() => setAccountMenuOpen((current) => !current)}
+              >
+                <span className="account-menu-avatar">
+                  {currentUser?.avatarUrl ? (
+                    <img src={resolvedAvatarUrl} alt="" className="account-menu-avatar-image" />
                   ) : (
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-xs font-semibold text-teal-700">
-                      {(currentUser?.username ?? "U").slice(0, 1).toUpperCase()}
-                    </span>
+                    getInitials(currentUser?.username ?? "U")
                   )}
-                  <span className="hidden max-w-24 truncate text-sm font-medium sm:inline">
-                    {currentUser?.username ?? "Profil"}
+                </span>
+                <span className="account-menu-copy">
+                  <span className="account-menu-name">{currentUser?.username ?? "Compte"}</span>
+                  <span className="account-menu-role">
+                    {preferredLanguage ?? formatRoleLabel(currentUser?.role)}
                   </span>
-                  <ChevronDown className="h-4 w-4 text-slate-500" />
-                </button>
+                </span>
+                <span className="account-menu-caret" aria-hidden="true">
+                  {`\u25BE`}
+                </span>
+              </button>
 
-                {profileOpen && (
-                  <div className="absolute right-0 top-12 z-30 w-52 rounded-[14px] border border-[var(--color-border)] bg-white p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.12)]">
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                    >
-                      <UserRound className="h-4 w-4" />
-                      Profil
-                    </Link>
-                    <Link
-                      to="/account"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Compte
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={logout}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Deconnexion
-                    </button>
+              {accountMenuOpen ? (
+                <div className="account-menu-popover" role="menu" aria-label="Menu du compte">
+                  <div className="account-menu-summary">
+                    <span className="account-menu-summary-avatar">
+                      {getInitials(currentUser?.username ?? "U")}
+                    </span>
+                    <div className="account-menu-summary-copy">
+                      <strong>{currentUser?.username ?? "Compte"}</strong>
+                      <span>{formatRoleLabel(currentUser?.role)}</span>
+                    </div>
+                    {preferredLanguage ? (
+                      <span className="account-menu-badge">{preferredLanguage}</span>
+                    ) : null}
                   </div>
-                )}
-              </div>
+
+                  <button
+                    type="button"
+                    className="account-menu-item"
+                    role="menuitem"
+                    onClick={() => handleMenuNavigate("/profil")}
+                  >
+                    <span aria-hidden="true">{`\uD83D\uDC64`}</span>
+                    <span>Profil</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="account-menu-item"
+                    role="menuitem"
+                    onClick={() => handleMenuNavigate("/parametres")}
+                  >
+                    <span aria-hidden="true">{`\u2699`}</span>
+                    <span>Parametres</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="account-menu-item danger"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <span aria-hidden="true">{`\u21AA`}</span>
+                    <span>Deconnexion</span>
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>
 
-        <main className="h-[calc(100vh-4rem)] overflow-y-auto p-5 sm:p-6">{children}</main>
+        <main className="shell-content">{children}</main>
       </div>
+
+      {searchOpen ? (
+        <div className="search-overlay" onClick={closeSearch}>
+          <div className="search-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="search-input-row">
+              <span aria-hidden="true">{`\uD83D\uDD0D`}</span>
+              <input
+                ref={searchInputRef}
+                className="search-input"
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder="Rechercher une page..."
+              />
+            </div>
+
+            <div className="search-results">
+              {searchResults.length > 0 ? (
+                searchResults.map((result) => (
+                  <button
+                    key={result.id}
+                    type="button"
+                    className="search-result"
+                    onClick={() => {
+                      closeSearch();
+                      navigate(result.to);
+                    }}
+                  >
+                    <span className="search-result-title">{result.title}</span>
+                    <span className="search-result-meta">{result.meta}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="search-empty">Aucun resultat pour cette recherche.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showChatWidget ? <ChatWidget /> : null}
     </div>
   );
 }
 
-function resolveAssetUrl(url: string | null | undefined) {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
+function buildBreadcrumbs(pathname: string): Breadcrumb[] {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 0 || segments[0] === "accueil") {
+    return [{ label: "Accueil", current: true }];
   }
-  if (url.startsWith("/")) {
-    return `${apiBaseUrl}${url}`;
+
+  if (segments[0] === "apprendre") {
+    if (!segments[1]) {
+      return [{ label: "Apprendre" }, { label: "Parcours", current: true }];
+    }
+
+    return [{ label: "Apprendre" }, { label: `Cours ${segments[1]}`, current: true }];
   }
-  return `${apiBaseUrl}/${url}`;
+
+  if (segments[0] === "classement") {
+    return [{ label: "Classement", current: true }];
+  }
+
+  if (segments[0] === "chat") {
+    return [{ label: "Discussion" }, { label: "Chat", current: true }];
+  }
+
+  if (segments[0] === "profil") {
+    return [{ label: "Profil", current: true }];
+  }
+
+  if (segments[0] === "parametres") {
+    return [{ label: "Parametres", current: true }];
+  }
+
+  if (segments[0] === "admin") {
+    return [{ label: "Admin" }, { label: "Panel", current: true }];
+  }
+
+  return [{ label: "UniCode", current: true }];
+}
+
+function buildResumeTarget(
+  recentLessons: ReturnType<typeof getRecentLessons>
+): ResumeTarget | null {
+  const lesson = recentLessons[0];
+  if (!lesson) {
+    return null;
+  }
+
+  return {
+    title: lesson.lessonTitle,
+    subtitle: lesson.courseTitle,
+    to: `/apprendre/${lesson.courseId}/${lesson.unitId}/${lesson.lessonId}`,
+    languageCode: lesson.languageCode,
+  };
+}
+
+function buildSidebarCopy(completedToday: number, lastActivityLabel: string, streak: number) {
+  if (completedToday > 0) {
+    return `${completedToday} lecon${completedToday > 1 ? "s" : ""} validee${completedToday > 1 ? "s" : ""} aujourd'hui.`;
+  }
+
+  if (streak > 0) {
+    return `Serie reelle de ${streak} jour${streak > 1 ? "s" : ""}. Derniere activite ${lastActivityLabel.toLowerCase()}.`;
+  }
+
+  if (lastActivityLabel !== "Aucune activite") {
+    return `Derniere activite ${lastActivityLabel.toLowerCase()}. Reprends une lecon pour relancer le rythme.`;
+  }
+
+  return "Commence une premiere lecon pour lancer ta progression visible ici.";
+}
+
+function resolvePreferredLanguage(
+  currentUser: Awaited<ReturnType<typeof getCurrentUser>> | undefined
+) {
+  const preferredName = currentUser?.preferredLanguageName?.trim();
+  if (preferredName) {
+    return preferredName;
+  }
+
+  const preferredCode = currentUser?.preferredLanguageCode?.trim();
+  return preferredCode ? preferredCode.toUpperCase() : null;
+}
+
+function formatRoleLabel(role: string | undefined) {
+  return (role ?? "").toUpperCase() === "ADMIN" ? "Administrateur" : "Etudiant";
+}
+
+function resolveAvatarUrl(avatarUrl: string | null | undefined) {
+  if (!avatarUrl) {
+    return "";
+  }
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    return avatarUrl;
+  }
+  if (avatarUrl.startsWith("/")) {
+    return `${apiBaseUrl}${avatarUrl}`;
+  }
+  return `${apiBaseUrl}/${avatarUrl}`;
+}
+
+function formatLastActivity(progressItems: LessonProgressDto[]) {
+  const latestTimestamp = progressItems.reduce<number | null>((latest, item) => {
+    if (item.status !== "COMPLETED" || !item.completedAt) {
+      return latest;
+    }
+
+    const timestamp = new Date(item.completedAt).getTime();
+    if (Number.isNaN(timestamp)) {
+      return latest;
+    }
+
+    if (latest === null || timestamp > latest) {
+      return timestamp;
+    }
+
+    return latest;
+  }, null);
+
+  if (latestTimestamp === null) {
+    return "Aucune activite";
+  }
+
+  return formatDateDistance(new Date(latestTimestamp));
+}
+
+function formatDateDistance(date: Date) {
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
+  if (diffDays <= 0) {
+    return "Aujourd'hui";
+  }
+
+  if (diffDays === 1) {
+    return "Hier";
+  }
+
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+  });
 }

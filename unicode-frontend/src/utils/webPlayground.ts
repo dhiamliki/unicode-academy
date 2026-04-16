@@ -6,33 +6,36 @@ const DEFAULT_WEB_SHELLS: Record<WebLanguage, string> = {
   html: `<!DOCTYPE html>
 <html>
 <head>
-  <title>UniCode Practice</title>
+  <title>Defi UniCode</title>
 </head>
 <body>
-
+  <section>
+    <h1>Previsualisation</h1>
+    <p>Ton rendu apparaitra ici apres execution.</p>
+  </section>
 </body>
 </html>`,
   css: `<!DOCTYPE html>
 <html>
 <head>
-  <title>UniCode Practice</title>
+  <title>Defi UniCode</title>
   <style>
 
   </style>
 </head>
 <body>
-  <h1 class="title">UniCode Practice</h1>
-  <p>Edit CSS and click Run.</p>
+  <h1 class="title">Previsualisation</h1>
+  <p>Modifie le CSS puis clique sur Executer.</p>
 </body>
 </html>`,
   javascript: `<!DOCTYPE html>
 <html>
 <head>
-  <title>UniCode Practice</title>
+  <title>Defi UniCode</title>
 </head>
 <body>
-  <h1 id="title">UniCode Practice</h1>
-  <p>Edit JavaScript and click Run.</p>
+  <h1 id="title">Previsualisation</h1>
+  <p>Modifie le JavaScript puis clique sur Executer.</p>
   <script>
 
   </script>

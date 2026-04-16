@@ -1,5 +1,6 @@
 package com.unicodeacademy.backend.repository;
 
+import com.unicodeacademy.backend.dto.LessonSummaryDto;
 import com.unicodeacademy.backend.model.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,25 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     }
 
     List<Lesson> findByCourseIdOrderByOrderIndexAsc(Long courseId);
+
+    @Query("""
+            select new com.unicodeacademy.backend.dto.LessonSummaryDto(
+                l.id,
+                l.title,
+                case
+                    when lower(l.title) like '%quiz%'
+                      or lower(l.title) like '%test%'
+                      or lower(l.title) like '%exercice%'
+                    then 'FINAL_QUIZ'
+                    else 'REGULAR'
+                end,
+                l.orderIndex
+            )
+            from Lesson l
+            where l.course.id = :courseId
+            order by l.orderIndex asc
+            """)
+    List<LessonSummaryDto> findSummaryByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             select l

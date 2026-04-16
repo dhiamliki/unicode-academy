@@ -7,7 +7,8 @@ INSERT INTO programming_languages (id, code, name) VALUES
                                                        (6, 'csharp', 'C# / .NET'),
                                                        (7, 'html', 'HTML'),
                                                        (8, 'css', 'CSS'),
-                                                       (9, 'js', 'JavaScript');
+                                                       (9, 'js', 'JavaScript')
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO courses (id, code, title, description, language_id) VALUES
                                                                     (1, 'C-101', 'Programmation en C', 'Bases et notions avancÃ©es en C : variables, conditions, boucles, pointeurs, fichiers.', 1),
@@ -18,7 +19,8 @@ INSERT INTO courses (id, code, title, description, language_id) VALUES
                                                                     (6, 'CSHARP-101', '.NET (C#)', 'Syntaxe C#, OOP, collections, LINQ, fichiers.', 6),
                                                                     (7, 'HTML-101', 'HTML', 'Structure de page, elements, formulaires, semantique.', 7),
                                                                     (8, 'CSS-101', 'CSS', 'Mise en page, couleurs, typographie, flexbox, grid.', 8),
-                                                                    (9, 'JS-101', 'JavaScript', 'Variables, DOM, events, fetch, async, modules.', 9);
+                                                                    (9, 'JS-101', 'JavaScript', 'Variables, DOM, events, fetch, async, modules.', 9)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (1, 'Variables et types', '## Objectif
@@ -584,7 +586,8 @@ if(scanf("%d",&n)!=1){ fprintf(stderr,"bad input\n"); }
                                                                      (20, 'Quiz final C', '## Objectif
 Reviser les notions principales du C.
 
-Quiz final (15 questions).', 20, 1);
+Quiz final (15 questions).', 20, 1)
+ON CONFLICT (id) DO NOTHING;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -1166,7 +1169,8 @@ tasks.get(0).done = true;
                                                                      (40, 'Quiz final Java', '## Objectif
 Reviser les notions principales de Java.
 
-Quiz final (15 questions).', 20, 2);
+Quiz final (15 questions).', 20, 2)
+ON CONFLICT (id) DO NOTHING;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -1739,7 +1743,8 @@ print(top)
                                                                      (60, 'Quiz final Python', '## Objectif
 Reviser les notions principales de Python.
 
-Quiz final (15 questions).', 20, 3);
+Quiz final (15 questions).', 20, 3)
+ON CONFLICT (id) DO NOTHING;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -2183,7 +2188,8 @@ std::cout << "ok";
                                                                      (80, 'Quiz final C++', '## Objectif
 Comprendre Quiz final C++ en C++.
 
-Quiz final (15 questions).', 20, 4);
+Quiz final (15 questions).', 20, 4)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (81, 'Introduction MySQL', '## Objectif
@@ -2626,7 +2632,8 @@ SELECT 1;
                                                                      (100, 'Quiz final MySQL', '## Objectif
 Comprendre Quiz final MySQL en MySQL.
 
-Quiz final (15 questions).', 20, 5);
+Quiz final (15 questions).', 20, 5)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (101, 'Variables et types', '## Objectif
@@ -3069,7 +3076,8 @@ Console.WriteLine("ok");
                                                                      (120, 'Quiz final C#', '## Objectif
 Comprendre Quiz final C# en C#.
 
-Quiz final (15 questions).', 20, 6);
+Quiz final (15 questions).', 20, 6)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (121, 'Structure de page', '## Objectif
@@ -3513,7 +3521,8 @@ Comprendre Details et resume en HTML.
                                                                      (140, 'Quiz final HTML', '## Objectif
 Comprendre Quiz final HTML en HTML.
 
-Quiz final (15 questions).', 20, 7);
+Quiz final (15 questions).', 20, 7)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (141, 'Selecteurs', '## Objectif
@@ -3956,7 +3965,8 @@ Comprendre Overflow en CSS.
                                                                      (160, 'Specificite', '## Objectif
 Comprendre Specificite en CSS.
 
-Quiz final (15 questions).', 20, 8);
+Quiz final (15 questions).', 20, 8)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (161, 'Variables', '## Objectif
@@ -4399,7 +4409,8 @@ console.log("ok");
                                                                      (180, 'Quiz final JavaScript', '## Objectif
 Comprendre Quiz final JavaScript en JavaScript.
 
-Quiz final (15 questions).', 20, 9);
+Quiz final (15 questions).', 20, 9)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO exercises (id, type, question, choices_json, answer, explanation, order_index, lesson_id) VALUES
                                                                     (1,  'MCQ', 'Quel type est utilisÃ© pour stocker un entier en C ?', '["char","int","float","double"]', 'int', 'int est le type standard pour les entiers.', 1, 1),
@@ -5049,9 +5060,114 @@ INSERT INTO exercises (id, type, question, choices_json, answer, explanation, or
                                                                     (1077, 'MCQ', 'Quelle methode transforme un objet JS en chaine JSON ?', '["JSON.stringify","JSON.parse","Object.stringify","encodeJSON"]', 'JSON.stringify', 'JSON.stringify convertit un objet en JSON texte.', 12, 180),
                                                                     (1078, 'MCQ', 'Quelle methode retourne le premier element pour un selecteur CSS ?', '["querySelector","getElementById","querySelectorAll","find"]', 'querySelector', 'querySelector retourne le premier match.', 13, 180),
                                                                     (1079, 'MCQ', 'Quelle boucle parcourt les valeurs d un tableau ?', '["for...of","for...in","while","switch"]', 'for...of', 'for...of parcourt les valeurs du tableau.', 14, 180),
-                                                                    (1080, 'MCQ', 'Quel mot cle interrompt une boucle ?', '["break","continue","return","exit"]', 'break', 'break arrete la boucle en cours.', 15, 180);
+                                                                    (1080, 'MCQ', 'Quel mot cle interrompt une boucle ?', '["break","continue","return","exit"]', 'break', 'break arrete la boucle en cours.', 15, 180)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- Dev admin account (password: Admin@123)
 INSERT INTO users (username, email, password, role)
-VALUES ('admin', 'admin@unicode.local', '$2b$10$l8fSvpu7EYRbSoHSXKSJ7.w9aVO8UTihfLXObGMqEppsUZ3Mu4GQy', 'ADMIN');
+VALUES ('admin', 'admin@unicode.local', '$2b$10$l8fSvpu7EYRbSoHSXKSJ7.w9aVO8UTihfLXObGMqEppsUZ3Mu4GQy', 'ADMIN')
+ON CONFLICT (email) DO NOTHING;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), '#include <stdio.h>
+
+int main(void) {
+    printf("Hello, C!\n");
+    return 0;
+}'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'c'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'C'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Hello, C!')
+WHERE course_id = 1;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+    }
+}'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'java'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'JAVA'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Hello, Java!')
+WHERE course_id = 2;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'print("Hello, Python!")'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'python'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'PYTHON'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Hello, Python!')
+WHERE course_id = 3;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), '#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, C++!" << endl;
+    return 0;
+}'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'cpp'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'CPP'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Hello, C++!')
+WHERE course_id = 4;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'SELECT ''Hello, SQL!'' AS message;'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'mysql'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'SQL'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Result #1
+message
+Hello, SQL!')
+WHERE course_id = 5;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'using System;
+
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("Hello, C#!");
+    }
+}'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'csharp'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'CSHARP'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Hello, C#!')
+WHERE course_id = 6;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), '<!DOCTYPE html>
+<html lang="fr">
+  <body>
+    <h1>Bonjour UniCode</h1>
+    <p>Bienvenue dans la pratique HTML.</p>
+  </body>
+</html>'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'html'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'HTML'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Le rendu doit afficher un titre et un paragraphe.')
+WHERE course_id = 7;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+h1 {
+  color: #2563eb;
+}'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'css'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'CSS'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'L''apercu doit refleter les styles appliques.')
+WHERE course_id = 8;
+
+UPDATE lessons
+SET starter_code = COALESCE(NULLIF(starter_code, ''), 'document.body.innerHTML = "<h1>Bonjour UniCode</h1><p>JavaScript est actif.</p>";
+console.log("Bonjour UniCode");'),
+    editor_language = COALESCE(NULLIF(editor_language, ''), 'javascript'),
+    execution_type = COALESCE(NULLIF(execution_type, ''), 'JAVASCRIPT'),
+    sample_output = COALESCE(NULLIF(sample_output, ''), 'Le rendu doit montrer un titre et un paragraphe interactifs.')
+WHERE course_id = 9;

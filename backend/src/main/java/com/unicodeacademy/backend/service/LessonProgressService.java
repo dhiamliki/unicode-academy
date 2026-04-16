@@ -140,10 +140,11 @@ public class LessonProgressService {
 
         long attemptedExercises = userExerciseAttemptRepository
                 .countDistinctAttemptedExercisesByUserIdAndLessonId(user.getId(), lesson.getId());
+        long requiredExercises = Math.min(3, totalExercises);
 
-        if (attemptedExercises < totalExercises) {
+        if (attemptedExercises < requiredExercises) {
             throw new IllegalStateException(
-                    "Terminez tous les exercices avant de marquer cette lecon comme terminee (" +
+                    "Faites au moins " + requiredExercises + " exercice(s) avant de marquer cette lecon comme terminee (" +
                             attemptedExercises + "/" + totalExercises + " faits)"
             );
         }

@@ -1,15 +1,16 @@
 import axios from "axios";
-import { clearAuth, getRefreshToken, getToken, setAuthTokens } from "../auth/session";
+import { endAuthenticatedSession } from "../auth/authState";
+import { getRefreshToken, getToken, setAuthTokens } from "../auth/session";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export const http = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
 const authRefreshClient = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -38,7 +39,7 @@ async function getFreshAccessToken(): Promise<string | null> {
       .then((res) => {
         const nextAccessToken = res.data?.token;
         if (!nextAccessToken) {
-          clearAuth();
+          endAuthenticatedSession();
           return null;
         }
 
@@ -47,7 +48,7 @@ async function getFreshAccessToken(): Promise<string | null> {
         return nextAccessToken;
       })
       .catch(() => {
-        clearAuth();
+        endAuthenticatedSession();
         return null;
       })
       .finally(() => {

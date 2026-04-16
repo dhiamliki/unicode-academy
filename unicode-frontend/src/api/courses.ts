@@ -13,6 +13,13 @@ export type CourseDto = {
   } | null;
 };
 
+export type LessonSummaryDto = {
+  id: number;
+  title: string;
+  type: "REGULAR" | "FINAL_QUIZ" | string;
+  orderIndex?: number | null;
+};
+
 export async function getCourses(language?: string): Promise<CourseDto[]> {
   const res = await http.get<CourseDto[]>("/api/courses", {
     params: language ? { language } : undefined,
@@ -23,5 +30,10 @@ export async function getCourses(language?: string): Promise<CourseDto[]> {
     languageCode: course.languageCode ?? course.language?.code ?? undefined,
     languageName: course.languageName ?? course.language?.name ?? undefined,
   }));
+}
+
+export async function getLessonSummaries(courseId: number): Promise<LessonSummaryDto[]> {
+  const res = await http.get<LessonSummaryDto[]>(`/api/courses/${courseId}/lessons/summary`);
+  return res.data ?? [];
 }
 
