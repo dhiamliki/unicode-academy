@@ -1,25 +1,27 @@
-node_modules/
-uploads/
-backend/node_modules/
-unicode-frontend/node_modules/
-backend/target/
-unicode-frontend/dist/
-backend/uploads/
-backend/startup-check.log
-*.log
-.DS_Store
-.idea/
+# Build
+target/
+dist/
+build/
 
-# Ignore ONLY local dev config
+# Node
+node_modules/
+
+# Logs
+*.log
+*.err
+*.out
+*.pid
+
+# IDE
+.idea/
+.settings/
+.classpath
+.project
+
+# Local config
 **/application-dev.properties
 
-# Keep test config
-!backend/src/test/resources/application-test.properties
-
-# Env files
-**/*.env
-.env
-.env.*
-!.env.example
-
-local-config.yml
+# Runtime
+uploads/
+backend/uploads/
+tmp-pg-data/
