@@ -25,3 +25,9 @@ node_modules/
 uploads/
 backend/uploads/
 tmp-pg-data/
+
+# Frontend local env
+unicode-frontend/.env
+unicode-frontend/.env.local
+unicode-frontend/.env.development.local
+unicode-frontend/.env.production.local
