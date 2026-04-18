@@ -388,7 +388,7 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
       </aside>
 
-      <div className="shell-main">
+      <div className={`shell-main ${location.pathname.startsWith('/admin') ? 'compact-screenshot' : ''}`}>
         <header className="app-topbar">
           <div className="topbar-breadcrumb">
             {breadcrumb.map((item, index) => (

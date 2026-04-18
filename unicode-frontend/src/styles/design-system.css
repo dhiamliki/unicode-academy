@@ -52,7 +52,7 @@ html,
 body,
 #root {
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 body {
@@ -93,18 +93,42 @@ img {
   color: var(--text-1);
 }
 
+/* Custom scrollbar styling (WebKit browsers) */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--surface2);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+  background: linear-gradient(180deg, var(--teal), var(--indigo));
+  border-radius: 999px;
+  border: 3px solid var(--surface2);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.05);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--teal) var(--surface2);
+}
+
+/* Fallback for other browsers */
+* {
+  -ms-overflow-style: auto;
 }
 
 .text-muted {
@@ -115,11 +139,38 @@ img {
   color: var(--text-3);
 }
 
+.lesson-excerpt {
+  color: var(--text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  max-height: calc(1.3em * 3);
+  font-size: 13px;
+}
+
 .page {
   min-height: 100%;
   display: grid;
   align-content: start;
   gap: 24px;
+}
+
+/* Compact screenshot mode for Admin pages: reduces top gaps so screenshots fit tighter */
+.page.page-stack.screenshot-compact {
+  gap: 8px;
+  padding-top: 8px;
+}
+.page.page-stack.screenshot-compact > .card.content-section:first-child {
+  padding-top: 12px;
+}
+.page.page-stack.screenshot-compact .section-head {
+  gap: 8px;
+}
+.page.page-stack.screenshot-compact .stats-grid {
+  margin-top: 0;
 }
 
 .page-stack {
@@ -648,7 +699,7 @@ h4,
 .shell {
   display: flex;
   height: 100vh;
-  overflow: hidden;
+  overflow: auto;
   background: var(--bg);
 }
 
@@ -662,7 +713,7 @@ h4,
   border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .sidebar-brand {
@@ -1002,7 +1053,7 @@ h4,
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .app-topbar {
@@ -1260,6 +1311,11 @@ h4,
   overflow-y: auto;
   background: var(--bg);
   padding: 24px;
+}
+
+/* compact screenshot mode reduces top padding inside shell for admin pages */
+.shell-main.compact-screenshot .shell-content {
+  padding-top: 8px;
 }
 
 .search-overlay {
@@ -3213,18 +3269,140 @@ h4,
   gap: 14px;
 }
 
+.admin-catalog-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.admin-catalog-panel {
+  align-content: start;
+  gap: 16px;
+}
+
+.admin-catalog-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-catalog-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.admin-catalog-field {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.admin-catalog-field .field-label {
+  margin-bottom: 0;
+}
+
+.admin-catalog-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-list.admin-catalog-list {
+  display: grid;
+  gap: 0;
+  align-content: start;
+  min-height: 0;
+}
+
+.admin-catalog-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-catalog-list-header .badge {
+  margin: 0;
+}
+
+.admin-catalog-row {
+  align-items: start;
+  padding: 12px 0;
+}
+
+.admin-catalog-row .admin-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 12px;
+}
+
+.admin-catalog-row .admin-meta {
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.admin-catalog-row .text-muted {
+  line-height: 1.45;
+}
+
+.admin-catalog-row .attachment-meta {
+  margin-top: 2px;
+}
+
+.admin-catalog-row .admin-actions {
+  align-self: start;
+  justify-self: end;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.admin-catalog-list-header + .admin-catalog-row {
+  border-top: 0;
+  padding-top: 0;
+}
+
+@media (min-width: 961px) {
+  .admin-catalog-panel {
+    height: clamp(1120px, 108vh, 1220px);
+    grid-template-rows: auto auto minmax(280px, 1fr);
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  .admin-list.admin-catalog-list {
+    height: 100%;
+    max-height: none;
+    overflow: auto;
+  }
+}
+
 .admin-row {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  padding: 12px 0;
+  padding: 10px 0;
   border-top: 1px solid var(--border-soft);
 }
 
 .admin-row:first-child {
   border-top: 0;
   padding-top: 0;
+}
+
+.admin-list {
+  display: block;
+  max-height: 520px; /* keeps lists compact and scrollable */
+  overflow: auto;
+  padding-right: 4px;
+}
+
+/* ensure badges inside lists don't create large empty space */
+.admin-list .badge {
+  margin: 0 0 8px 0;
 }
 
 .admin-avatar {
@@ -4881,6 +5059,10 @@ h4,
   .admin-actions {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .admin-catalog-row .admin-actions {
+    justify-content: flex-start;
   }
 
   .achievement-grid {

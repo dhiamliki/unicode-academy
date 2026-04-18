@@ -49,7 +49,7 @@ export default function ClassementPage() {
             <p className="section-kicker">Classement</p>
             <h1 className="section-title">Chargement du podium</h1>
             <p className="text-muted">
-              Nous récupérons les scores de la semaine et ton rang actuel.
+              Nous recuperons les scores globaux et ton rang actuel.
             </p>
           </div>
         </section>
@@ -71,8 +71,8 @@ export default function ClassementPage() {
           <EmptyState
             emoji="🏆"
             title="Classement vide"
-            subtitle="Termine ta première leçon pour apparaître ici."
-            actionLabel="Commencer à apprendre"
+            subtitle="Termine ta premiere lecon pour apparaitre ici."
+            actionLabel="Commencer a apprendre"
             onAction={() => navigate("/apprendre")}
           />
         </section>
@@ -85,10 +85,14 @@ export default function ClassementPage() {
       <section className="card content-section fu">
         <div className="section-head" style={{ alignItems: "center" }}>
           <div className="page-stack" style={{ gap: 8 }}>
-            <p className="section-kicker">Classement hebdomadaire</p>
-            <h1 className="section-title">Leaders de la semaine</h1>
+            <p className="section-kicker">Classement global</p>
+            <h1 className="section-title">Leaders UniCode</h1>
             <p className="text-muted">
-              Observe le podium, compare ta progression et vise la première place.
+              Observe le podium global, compare ta progression et vise la premiere place.
+            </p>
+            <p className="text-muted" style={{ fontSize: 13, marginTop: 6 }}>
+              Score = 10 points par lecon marquee terminee + 30 points bonus par cours entierement termine
+              (meme regle cote serveur pour tout le monde).
             </p>
           </div>
 
@@ -100,7 +104,7 @@ export default function ClassementPage() {
               justifyContent: "flex-end",
             }}
           >
-            <span className="badge badge-teal">{`${entries.length} joueurs classés`}</span>
+            <span className="badge badge-teal">{`${entries.length} joueurs classes`}</span>
             <span className="badge badge-yellow">
               {currentUserRow ? `#${currentUserRow.rank} · ${currentUserRow.points} XP` : "Hors classement"}
             </span>
@@ -112,7 +116,7 @@ export default function ClassementPage() {
         <header className="leaderboard-head">
           <div className="leaderboard-icon">🏆</div>
           <h2 className="section-title">Podium</h2>
-          <p className="leaderboard-subtitle">Cette semaine</p>
+          <p className="leaderboard-subtitle">Depuis le debut</p>
         </header>
 
         <div className="leaderboard-podium" style={{ marginTop: 20 }}>
@@ -134,7 +138,7 @@ export default function ClassementPage() {
                   >
                     --
                   </div>
-                  <div className="podium-name">À venir</div>
+                  <div className="podium-name">A venir</div>
                   <div
                     className={`podium-platform ${config.className}`}
                     style={{ background: `${config.color}22`, borderColor: `${config.color}55` }}
@@ -222,7 +226,7 @@ export default function ClassementPage() {
               fontSize: 13,
             }}
           >
-            Tu es déjà sur le podium cette semaine. Continue pour garder ton avance.
+            Tu es deja sur le podium global. Continue pour garder ton avance.
           </div>
         ) : null}
       </section>

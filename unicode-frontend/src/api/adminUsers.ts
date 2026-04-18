@@ -8,6 +8,10 @@ export type AdminUserDto = {
   email: string;
   role: AdminUserRole;
   createdAt?: string | null;
+  completedCoursesCount: number;
+  completedLessonsCount: number;
+  correctExercisesCount: number;
+  totalPoints: number;
 };
 
 export async function getAdminUsers(): Promise<AdminUserDto[]> {

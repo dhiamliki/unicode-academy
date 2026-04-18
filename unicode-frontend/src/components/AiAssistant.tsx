@@ -886,7 +886,7 @@ function looksLikeAssignmentInCondition(code: string, language?: string) {
   }
 
   if (["c", "cpp", "java", "csharp", "javascript"].includes(normalizedLanguage)) {
-    return /if\s*\([^\)]*\b[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]/s.test(source);
+    return /if\s*\([^)]*\b[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[^=]/s.test(source);
   }
 
   return false;

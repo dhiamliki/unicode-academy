@@ -19,21 +19,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LessonProgressService {
 
+    /**
+     * Business rules for lesson completion (see also {@link ProgressService}).
+     *
+     * <p><strong>Auto-completion trigger:</strong> {@link #maybeCompleteLessonAfterCorrectExercise(Long)}
+     * is invoked automatically after each correct exercise attempt. If the lesson has at least one
+     * exercise and the user has answered correctly on every distinct exercise of that lesson, the
+     * lesson status becomes COMPLETED and the completion timestamp is recorded (preserved if already set).
+     *
+     * <p><strong>Explicit toggle:</strong> Users can toggle lesson completion manually. Toggling
+     * from COMPLETED to IN_PROGRESS clears the completedAt timestamp; toggling back restores it
+     * to the current instant.
+     */
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
     private final ExerciseRepository exerciseRepository;
     private final UserExerciseAttemptRepository userExerciseAttemptRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
+    private final ProgressService progressService;
 
     public UserLessonProgress markLessonCompleted(Long lessonId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
-
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lecon introuvable: " + lessonId));
-
-        assertLessonCanBeCompleted(user, lesson);
+        User user = getCurrentUser();
+        Lesson lesson = getLesson(lessonId);
 
         UserLessonProgress progress = userLessonProgressRepository
                 .findByUserIdAndLessonId(user.getId(), lesson.getId())
@@ -46,16 +53,46 @@ public class LessonProgressService {
             progress.setCompletedAt(Instant.now());
         }
 
-        return userLessonProgressRepository.save(progress);
+        UserLessonProgress savedProgress = userLessonProgressRepository.save(progress);
+        progressService.syncCourseProgressForUser(user, lesson.getCourse());
+        return savedProgress;
+    }
+
+    /**
+     * When the lesson has at least one exercise, mark it completed once the learner has at least one
+     * <strong>correct</strong> attempt on every exercise of that lesson. Lessons without exercises are unchanged here
+     * (the learner still uses explicit completion on the lesson page).
+     */
+    public void maybeCompleteLessonAfterCorrectExercise(Long lessonId) {
+        User user = getCurrentUser();
+        getLesson(lessonId);
+
+        long exerciseCount = exerciseRepository.countByLessonId(lessonId);
+        if (exerciseCount == 0) {
+            return;
+        }
+
+        long distinctCorrect = userExerciseAttemptRepository.countDistinctCorrectExercisesByUserIdAndLessonId(
+                user.getId(),
+                lessonId
+        );
+        if (distinctCorrect < exerciseCount) {
+            return;
+        }
+
+        UserLessonProgress existing = userLessonProgressRepository
+                .findByUserIdAndLessonId(user.getId(), lessonId)
+                .orElse(null);
+        if (existing != null && existing.getStatus() == UserLessonProgress.Status.COMPLETED) {
+            return;
+        }
+
+        markLessonCompleted(lessonId);
     }
 
     public UserLessonProgress toggleLessonCompletion(Long lessonId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
-
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lecon introuvable: " + lessonId));
+        User user = getCurrentUser();
+        Lesson lesson = getLesson(lessonId);
 
         UserLessonProgress progress = userLessonProgressRepository
                 .findByUserIdAndLessonId(user.getId(), lesson.getId())
@@ -67,29 +104,27 @@ public class LessonProgressService {
         if (progress.getStatus() == UserLessonProgress.Status.COMPLETED) {
             progress.setStatus(UserLessonProgress.Status.IN_PROGRESS);
             progress.setCompletedAt(null);
-            return userLessonProgressRepository.save(progress);
+            UserLessonProgress savedProgress = userLessonProgressRepository.save(progress);
+            progressService.syncCourseProgressForUser(user, lesson.getCourse());
+            return savedProgress;
         }
-
-        assertLessonCanBeCompleted(user, lesson);
 
         progress.setStatus(UserLessonProgress.Status.COMPLETED);
         progress.setCompletedAt(Instant.now());
 
-        return userLessonProgressRepository.save(progress);
+        UserLessonProgress savedProgress = userLessonProgressRepository.save(progress);
+        progressService.syncCourseProgressForUser(user, lesson.getCourse());
+        return savedProgress;
     }
 
     public List<UserLessonProgress> getMyLessonProgress() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
+        User user = getCurrentUser();
 
         return userLessonProgressRepository.findByUserId(user.getId());
     }
 
     public void markLessonIncomplete(Long lessonId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
+        User user = getCurrentUser();
 
         UserLessonProgress progress = userLessonProgressRepository
                 .findByUserIdAndLessonId(user.getId(), lessonId)
@@ -99,54 +134,17 @@ public class LessonProgressService {
         progress.setCompletedAt(null);
 
         userLessonProgressRepository.save(progress);
+        progressService.syncCourseProgressForUser(user, progress.getLesson().getCourse());
     }
 
-    private void assertLessonCanBeCompleted(User user, Lesson lesson) {
-        assertPreviousLessonCompleted(user, lesson);
-        assertAllLessonExercisesAttempted(user, lesson);
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + email));
     }
 
-    private void assertPreviousLessonCompleted(User user, Lesson lesson) {
-        Integer orderIndex = lesson.getOrderIndex();
-        if (orderIndex == null || orderIndex <= 1) {
-            return;
-        }
-
-        Lesson previous = lessonRepository
-                .findByCourseIdAndOrderIndex(lesson.getCourse().getId(), orderIndex - 1)
-                .orElse(null);
-
-        if (previous == null) {
-            return;
-        }
-
-        UserLessonProgress prevProgress = userLessonProgressRepository
-                .findByUserIdAndLessonId(user.getId(), previous.getId())
-                .orElse(null);
-
-        boolean prevCompleted = prevProgress != null
-                && prevProgress.getStatus() == UserLessonProgress.Status.COMPLETED;
-
-        if (!prevCompleted) {
-            throw new IllegalStateException("Vous devez d'abord terminer la lecon precedente");
-        }
-    }
-
-    private void assertAllLessonExercisesAttempted(User user, Lesson lesson) {
-        long totalExercises = exerciseRepository.countByLessonId(lesson.getId());
-        if (totalExercises <= 0) {
-            return;
-        }
-
-        long attemptedExercises = userExerciseAttemptRepository
-                .countDistinctAttemptedExercisesByUserIdAndLessonId(user.getId(), lesson.getId());
-        long requiredExercises = Math.min(3, totalExercises);
-
-        if (attemptedExercises < requiredExercises) {
-            throw new IllegalStateException(
-                    "Faites au moins " + requiredExercises + " exercice(s) avant de marquer cette lecon comme terminee (" +
-                            attemptedExercises + "/" + totalExercises + " faits)"
-            );
-        }
+    private Lesson getLesson(Long lessonId) {
+        return lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lecon introuvable: " + lessonId));
     }
 }

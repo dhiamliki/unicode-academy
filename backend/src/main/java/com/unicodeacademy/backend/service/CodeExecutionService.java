@@ -33,10 +33,41 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
-public class CodeExecutionService {
+ @Service
+ public class CodeExecutionService {
 
-    private static final Logger log = LoggerFactory.getLogger(CodeExecutionService.class);
+     /**
+      * Local code execution engine for the UniCode Academy practice module.
+      *
+      * <p><strong>Scope (student demo):</strong>
+      * This service runs user code directly on the server JVM in a best-effort sandbox.
+      * It is designed for educational demonstrations on a local machine, not for multi-tenant
+      * production use. It supports a limited set of languages and applies basic safety checks.
+      *
+      * <p><strong>Supported languages:</strong> Python, Java, C, C++, C#, SQL. HTML/CSS/JavaScript
+      * are handled via client-side iframe preview and are not executed server-side.
+      *
+      * <p><strong>Safety controls:</strong>
+      * <ul>
+      *   <li>Process timeout (configurable, default 6s)</li>
+      *   <li>Output capture limit (default 64 KiB)</li>
+      *   <li>Code length limit (default 20 000 chars)</li>
+      *   <li>SQL statement allow-list (prefixes) and forbidden-pattern block-list</li>
+      *   <li>Working directory isolated per execution and deleted afterwards</li>
+      * </ul>
+      *
+      * <p><strong>Limitations (honest for defense):</strong>
+      * <ul>
+      *   <li>No containerization or OS-level sandbox (code runs as the server process user).</li>
+      *   <li>No resource quotas beyond timeout and output size (CPU/memory uncontrolled).</li>
+      *   <li>SQL uses an in-memory H2 database in MySQL mode; not a full RDBMS.</li>
+      *   <li>Web languages execute client-side only; server does not render them.</li>
+      *   <li>File system access is not permitted (code cannot read/write outside its temp dir).</li>
+      * </ul>
+      *
+      * <p>Any execution error returns a structured {@link CodeRunResponse} with error details.
+      */
+     private static final Logger log = LoggerFactory.getLogger(CodeExecutionService.class);
 
     private static final Set<String> SUPPORTED_LANGUAGES = Set.of(
             "python", "java", "c", "cpp", "csharp", "sql", "html", "css", "javascript"

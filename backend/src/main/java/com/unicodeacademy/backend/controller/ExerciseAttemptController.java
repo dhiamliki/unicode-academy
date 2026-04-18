@@ -8,6 +8,7 @@ import com.unicodeacademy.backend.model.UserExerciseAttempt;
 import com.unicodeacademy.backend.repository.ExerciseRepository;
 import com.unicodeacademy.backend.repository.UserExerciseAttemptRepository;
 import com.unicodeacademy.backend.repository.UserRepository;
+import com.unicodeacademy.backend.service.LessonProgressService;
 import com.unicodeacademy.backend.util.TextEncodingFixer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,22 +22,30 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/api/exercises")
-public class ExerciseAttemptController {
+ @RestController
+ @RequestMapping("/api/exercises")
+ public class ExerciseAttemptController {
 
-    private final UserRepository userRepository;
+     /**
+      * Handles exercise attempts and triggers automatic lesson completion when appropriate.
+      * After storing the attempt, if the answer was correct, the service checks whether
+      * all exercises of the lesson have been answered correctly and auto-completes the lesson.
+      */
+     private final UserRepository userRepository;
     private final ExerciseRepository exerciseRepository;
     private final UserExerciseAttemptRepository attemptRepository;
+    private final LessonProgressService lessonProgressService;
     private final ObjectMapper objectMapper;
 
     public ExerciseAttemptController(UserRepository userRepository,
                                      ExerciseRepository exerciseRepository,
                                      UserExerciseAttemptRepository attemptRepository,
+                                     LessonProgressService lessonProgressService,
                                      ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.attemptRepository = attemptRepository;
+        this.lessonProgressService = lessonProgressService;
         this.objectMapper = objectMapper;
     }
 
@@ -87,6 +96,10 @@ public class ExerciseAttemptController {
         attempt.setAttemptedAt(Instant.now());
 
         attemptRepository.save(attempt);
+
+        if (correct && exercise.getLesson() != null && exercise.getLesson().getId() != null) {
+            lessonProgressService.maybeCompleteLessonAfterCorrectExercise(exercise.getLesson().getId());
+        }
 
         String explanation = TextEncodingFixer.fix(exercise.getExplanation());
         String correctAnswer = correct ? null : normalizedExpected;

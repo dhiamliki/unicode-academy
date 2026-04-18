@@ -18,7 +18,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     Optional<Course> findByCode(String code);
+    Optional<Course> findByCodeIgnoreCase(String code);
     List<Course> findByLanguage_CodeIgnoreCase(String code);
+    long countByLanguageId(Long languageId);
 
     @Query("""
             select c.id as courseId,

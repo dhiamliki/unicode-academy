@@ -88,4 +88,10 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     Optional<LessonCoreProjection> findCoreById(@Param("lessonId") Long lessonId);
 
     Optional<Lesson> findByCourseIdAndOrderIndex(Long courseId, Integer orderIndex);
+    long countByCourseId(Long courseId);
+    boolean existsByCourseIdAndOrderIndex(Long courseId, Integer orderIndex);
+    boolean existsByCourseIdAndOrderIndexAndIdNot(Long courseId, Integer orderIndex, Long id);
+
+    @Query("SELECT MAX(l.orderIndex) FROM Lesson l WHERE l.course.id = :courseId")
+    Integer findMaxOrderIndexByCourseId(@Param("courseId") Long courseId);
 }

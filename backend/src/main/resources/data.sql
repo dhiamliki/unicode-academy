@@ -8,11 +8,11 @@ INSERT INTO programming_languages (id, code, name) VALUES
                                                        (7, 'html', 'HTML'),
                                                        (8, 'css', 'CSS'),
                                                        (9, 'js', 'JavaScript')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET code = EXCLUDED.code, name = EXCLUDED.name;
 
 INSERT INTO courses (id, code, title, description, language_id) VALUES
-                                                                    (1, 'C-101', 'Programmation en C', 'Bases et notions avancÃ©es en C : variables, conditions, boucles, pointeurs, fichiers.', 1),
-                                                                    (2, 'JAVA-101', 'Programmation Java', 'Bases et notions avancÃ©es en Java : OOP, exceptions, collections, fichiers.', 2),
+                                                                    (1, 'C-101', 'Programmation en C', 'Bases et notions avancées en C : variables, conditions, boucles, pointeurs, fichiers.', 1),
+                                                                    (2, 'JAVA-101', 'Programmation Java', 'Bases et notions avancées en Java : OOP, exceptions, collections, fichiers.', 2),
                                                                     (3, 'PY-101', 'Programmation Python', 'Bases et notions utiles en Python : structures, fonctions, fichiers, collections.', 3),
                                                                     (4, 'CPP-101', 'Programmation C++', 'Bases et notions avances en C++ : types, OOP, STL, fichiers.', 4),
                                                                     (5, 'MYSQL-101', 'Bases MySQL', 'Requetes SQL, tables, jointures, agregats, transactions.', 5),
@@ -20,7 +20,7 @@ INSERT INTO courses (id, code, title, description, language_id) VALUES
                                                                     (7, 'HTML-101', 'HTML', 'Structure de page, elements, formulaires, semantique.', 7),
                                                                     (8, 'CSS-101', 'CSS', 'Mise en page, couleurs, typographie, flexbox, grid.', 8),
                                                                     (9, 'JS-101', 'JavaScript', 'Variables, DOM, events, fetch, async, modules.', 9)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET code = EXCLUDED.code, title = EXCLUDED.title, description = EXCLUDED.description, language_id = EXCLUDED.language_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (1, 'Variables et types', '## Objectif
@@ -49,12 +49,12 @@ unsigned int u = 42u;
 printf("s=%hd u=%u\n", s, u);
 ```
 
-## Ã€ retenir
+## À retenir
 - Types courants: int, double, char, long, float.
 - Initialiser les variables evite des valeurs indefinies.
 - La conversion explicite se fait avec (type).
 ', 1, 1),
-                                                                     (2, 'OpÃ©rateurs', '## Objectif
+                                                                     (2, 'Opérateurs', '## Objectif
 Utiliser les operateurs arithmetiques, de comparaison et logiques, et comprendre la precedence.
 
 ## Exemple 1
@@ -78,7 +78,7 @@ n *= 2;
 printf("%d\n", n);
 ```
 
-## Ã€ retenir
+## À retenir
 - Parentheses clarifient la precedence.
 - Comparaison: == != < > <= >=.
 - Logique: && (et), || (ou), ! (non).
@@ -90,7 +90,7 @@ Ecrire des conditions avec if/else, switch et operateur ternaire.
 ```c
 int note=12;
 if(note>=10) printf("Admis\n");
-else printf("AjournÃ©\n");
+else printf("Ajourné\n");
 ```
 
 ## Exemple 2
@@ -110,7 +110,7 @@ const char* msg = (age>=18) ? "majeur" : "mineur";
 printf("%s\n", msg);
 ```
 
-## Ã€ retenir
+## À retenir
 - if/else teste une condition booleenne.
 - switch choisit selon une valeur, penser a break.
 - L operateur ternaire est court: cond ? a : b.
@@ -143,7 +143,7 @@ do{
 }while(i<3);
 ```
 
-## Ã€ retenir
+## À retenir
 - for convient quand le nombre d iterations est connu.
 - while convient quand la condition est testee a chaque tour.
 - break sort, continue saute a l iteration suivante.
@@ -169,12 +169,12 @@ int square(int x){ return x*x; }
 printf("%d\n", square(4));
 ```
 
-## Ã€ retenir
+## À retenir
 - Une fonction a un type de retour et des parametres.
 - Le prototype permet la declaration avant usage.
 - Les arguments sont passes par valeur.
 ', 5, 1),
-                                                                     (6, 'PortÃ©e et variables', '## Objectif
+                                                                     (6, 'Portée et variables', '## Objectif
 Comprendre la portee des variables, static et const.
 
 ## Exemple 1
@@ -203,7 +203,7 @@ for(int i=0;i<max;i++){
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - Une variable locale est visible dans son bloc.
 - static conserve la valeur entre appels.
 - const protege une variable contre la modification.
@@ -232,12 +232,12 @@ for(int i=0;i<4;i++) t[i]=i+1;
 printf("%d\n", t[3]);
 ```
 
-## Ã€ retenir
+## À retenir
 - Les indices commencent a 0.
 - La taille est fixe a la creation.
 - sizeof(t)/sizeof(t[0]) donne le nombre d elements.
 ', 7, 1),
-                                                                     (8, 'ChaÃ®nes', '## Objectif
+                                                                     (8, 'Chaînes', '## Objectif
 Comprendre qu une chaine est un tableau de char termine par \0.
 
 ## Exemple 1
@@ -262,12 +262,12 @@ char b[]="abd";
 printf("%d\n", strcmp(a,b));
 ```
 
-## Ã€ retenir
+## À retenir
 - Une chaine se termine par le caractere nul \0.
 - Utiliser string.h pour strlen, strcpy, strcmp, strcat.
 - Toujours prevoir assez de place pour \0.
 ', 8, 1),
-                                                                     (9, 'EntrÃ©es / Sorties', '## Objectif
+                                                                     (9, 'Entrées / Sorties', '## Objectif
 Lire et afficher des donnees avec scanf/printf et fgets.
 
 ## Exemple 1
@@ -291,7 +291,7 @@ scanf("%19s", name);
 printf("bonjour %s\n", name);
 ```
 
-## Ã€ retenir
+## À retenir
 - scanf lit selon un format, passer l adresse avec &.
 - fgets lit une ligne complete et evite le depassement.
 - printf formate la sortie.
@@ -321,7 +321,7 @@ int *p=&t[1];
 printf("%d\n", *p);
 ```
 
-## Ã€ retenir
+## À retenir
 - & donne l adresse, * donne la valeur pointee.
 - Un pointeur non initialise est dangereux.
 - Le type du pointeur indique le type pointe.
@@ -351,7 +351,7 @@ int t[4]={1,2,3,4};
 for(int *p=t; p<t+4; p++) printf("%d ", *p);
 ```
 
-## Ã€ retenir
+## À retenir
 - Un tableau passe en parametre devient un pointeur.
 - *(t+i) est equivalent a t[i].
 - L arithmetique avance par taille de type.
@@ -381,7 +381,7 @@ printf("%d\n", t[0]);
 free(t);
 ```
 
-## Ã€ retenir
+## À retenir
 - Toujours verifier si malloc retourne NULL.
 - realloc peut deplacer le bloc.
 - free libere la memoire une seule fois.
@@ -411,7 +411,7 @@ struct Point pts[2] = { {1,2}, {3,4} };
 printf("%d\n", pts[1].x);
 ```
 
-## Ã€ retenir
+## À retenir
 - Utiliser . pour un objet, -> pour un pointeur.
 - Une struct regroupe plusieurs variables.
 - On peut creer des tableaux de struct.
@@ -441,7 +441,7 @@ switch(l){
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - typedef simplifie les types longs.
 - enum liste des valeurs constantes.
 - Les enums peuvent etre utilises dans switch.
@@ -471,12 +471,12 @@ fprintf(f,"Ajout\n");
 fclose(f);
 ```
 
-## Ã€ retenir
+## À retenir
 - Verifier f!=NULL apres fopen.
 - fclose est obligatoire.
 - fgets lit une ligne entiere.
 ', 15, 1),
-                                                                     (16, 'RÃ©cursivitÃ©', '## Objectif
+                                                                     (16, 'Récursivité', '## Objectif
 Ecrire une fonction recursive avec un cas d arret.
 
 ## Exemple 1
@@ -494,12 +494,12 @@ int fib(int n){ return (n<=1)?n:fib(n-1)+fib(n-2); }
 int sum(int n){ return (n==0)?0:n+sum(n-1); }
 ```
 
-## Ã€ retenir
+## À retenir
 - Toujours definir un cas d arret.
 - Chaque appel ajoute une frame sur la pile.
 - La recursion peut etre couteuse.
 ', 16, 1),
-                                                                     (17, 'PrÃ©processeur', '## Objectif
+                                                                     (17, 'Préprocesseur', '## Objectif
 Utiliser le preprocesseur pour des constantes et macros.
 
 ## Exemple 1
@@ -522,7 +522,7 @@ printf("debug\n");
 #endif
 ```
 
-## Ã€ retenir
+## À retenir
 - Le preprocesseur agit avant compilation.
 - Une macro doit etre parenthesee.
 - #include ajoute un fichier header.
@@ -552,7 +552,7 @@ int (*ops[2])(int,int) = { add, sub };
 printf("%d\n", ops[1](5,2));
 ```
 
-## Ã€ retenir
+## À retenir
 - La syntaxe du pointeur de fonction contient (*pf).
 - On peut passer une fonction comme argument.
 - Utile pour des callbacks.
@@ -578,7 +578,7 @@ int n;
 if(scanf("%d",&n)!=1){ fprintf(stderr,"bad input\n"); }
 ```
 
-## Ã€ retenir
+## À retenir
 - Toujours tester les valeurs de retour.
 - perror affiche un message base sur errno.
 - En cas d erreur, retourner un code non nul.
@@ -587,7 +587,7 @@ if(scanf("%d",&n)!=1){ fprintf(stderr,"bad input\n"); }
 Reviser les notions principales du C.
 
 Quiz final (15 questions).', 20, 1)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -617,12 +617,12 @@ int i=(int)d;
 System.out.println(i);
 ```
 
-## Ã€ retenir
+## À retenir
 - Primitifs: int, double, boolean, char.
 - String est un objet.
 - Initialiser les variables evite des erreurs.
 ', 1, 2),
-                                                                     (22, 'OpÃ©rateurs', '## Objectif
+                                                                     (22, 'Opérateurs', '## Objectif
 Utiliser les operateurs arithmetiques, de comparaison et logiques.
 
 ## Exemple 1
@@ -646,7 +646,7 @@ String res = (n%2==0) ? "pair" : "impair";
 System.out.println(res);
 ```
 
-## Ã€ retenir
+## À retenir
 - Utiliser equals pour comparer des String.
 - Comparaison: == != < > <= >=.
 - Logique: &&, ||, !.
@@ -658,7 +658,7 @@ Ecrire des conditions avec if/else et switch.
 ```java
 int note=12;
 if(note>=10) System.out.println("Admis");
-else System.out.println("AjournÃ©");
+else System.out.println("Ajourné");
 ```
 
 ## Exemple 2
@@ -678,7 +678,7 @@ if("admin".equals(role)) System.out.println("ok");
 else System.out.println("no");
 ```
 
-## Ã€ retenir
+## À retenir
 - if/else teste une condition booleenne.
 - switch choisit selon une valeur, penser a break.
 - Les blocs utilisent des accolades.
@@ -711,12 +711,12 @@ do{
 }while(i<3);
 ```
 
-## Ã€ retenir
+## À retenir
 - for convient quand le nombre d iterations est connu.
 - while convient quand la condition est testee a chaque tour.
 - break et continue controlent la boucle.
 ', 4, 2),
-                                                                     (25, 'MÃ©thodes', '## Objectif
+                                                                     (25, 'Méthodes', '## Objectif
 Creer des methodes statiques et surcharger.
 
 ## Exemple 1
@@ -735,7 +735,7 @@ static void print(String s){ System.out.println(s); }
 static void print(int n){ System.out.println(n); }
 ```
 
-## Ã€ retenir
+## À retenir
 - La signature inclut nom et types des parametres.
 - Une methode peut etre surchargee.
 - Le type de retour peut etre void.
@@ -770,7 +770,7 @@ u.name = u.name.toUpperCase();
 System.out.println(u.name);
 ```
 
-## Ã€ retenir
+## À retenir
 - Une classe est un modele.
 - Un objet est une instance.
 - Les champs et methodes appartiennent a la classe.
@@ -805,7 +805,7 @@ class User{
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - Le constructeur a le meme nom que la classe.
 - Il ne declare pas de type de retour.
 - On peut surcharger les constructeurs.
@@ -836,12 +836,12 @@ public boolean isAdult(){
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - private cache les donnees internes.
 - Les setters peuvent valider les valeurs.
 - L encapsulation protege les invariants.
 ', 8, 2),
-                                                                     (29, 'HÃ©ritage', '## Objectif
+                                                                     (29, 'Héritage', '## Objectif
 Reutiliser du code avec extends et override.
 
 ## Exemple 1
@@ -871,7 +871,7 @@ class Student extends Person{
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - extends cree une relation parent/enfant.
 - @Override indique une redefinition.
 - super permet d appeler le parent.
@@ -897,7 +897,7 @@ List<Animal> list = List.of(new Dog(), new Cat());
 for(Animal x: list) x.speak();
 ```
 
-## Ã€ retenir
+## À retenir
 - Une reference parent peut pointer un enfant.
 - La methode appelee depend de l objet reel.
 - Favoriser les types abstraits.
@@ -929,7 +929,7 @@ Printable p = () -> System.out.println("Hi");
 p.print();
 ```
 
-## Ã€ retenir
+## À retenir
 - Une classe peut implementer plusieurs interfaces.
 - Les methodes d interface sont publiques.
 - Les interfaces aident le test et le decouplage.
@@ -962,7 +962,7 @@ try{
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - try/catch intercepte les exceptions.
 - throw lance une exception.
 - Certaines exceptions sont checked.
@@ -991,7 +991,7 @@ names.remove(0);
 System.out.println(names.size());
 ```
 
-## Ã€ retenir
+## À retenir
 - List garde l ordre et accepte les doublons.
 - L indice commence a 0.
 - ArrayList est une implementation courante.
@@ -1020,12 +1020,12 @@ int v = m.getOrDefault("z", 0);
 System.out.println(v);
 ```
 
-## Ã€ retenir
+## À retenir
 - Les cles sont uniques.
 - get retourne null si absent.
 - HashMap est rapide pour les acces.
 ', 14, 2),
-                                                                     (35, 'GÃ©nÃ©riques', '## Objectif
+                                                                     (35, 'Génériques', '## Objectif
 Utiliser les generiques pour securiser les types.
 
 ## Exemple 1
@@ -1050,7 +1050,7 @@ class Box<T>{
 Box<String> b = new Box<>("hi");
 ```
 
-## Ã€ retenir
+## À retenir
 - Les generiques evitent les casts.
 - Le type est verifie a la compilation.
 - On peut definir des methodes generiques.
@@ -1076,7 +1076,7 @@ try (BufferedReader br = Files.newBufferedReader(Path.of("a.txt"))) {
 }
 ```
 
-## Ã€ retenir
+## À retenir
 - Les operations peuvent lever IOException.
 - Path represente un chemin.
 - Files fournit des methodes utilitaires.
@@ -1103,7 +1103,7 @@ LocalDate d = LocalDate.parse("2026-02-16");
 System.out.println(d.getDayOfWeek());
 ```
 
-## Ã€ retenir
+## À retenir
 - Les objets java.time sont immuables.
 - Utiliser DateTimeFormatter pour le format.
 - LocalDate ne contient pas heure.
@@ -1132,7 +1132,7 @@ List<String> names = List.of("ana","ben");
 List<String> upper = names.stream().map(String::toUpperCase).toList();
 ```
 
-## Ã€ retenir
+## À retenir
 - Les operations intermediaires sont lazy.
 - Une operation terminale declenche le calcul.
 - Les streams rendent le code expressif.
@@ -1161,7 +1161,7 @@ tasks.add(t);
 tasks.get(0).done = true;
 ```
 
-## Ã€ retenir
+## À retenir
 - Stocker les taches dans une List.
 - Ajouter, supprimer, marquer comme fait.
 - Afficher une liste claire.
@@ -1170,7 +1170,7 @@ tasks.get(0).done = true;
 Reviser les notions principales de Java.
 
 Quiz final (15 questions).', 20, 2)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -1198,12 +1198,12 @@ a, b = 1, 2
 print(a + b)
 ```
 
-## Ã€ retenir
+## À retenir
 - Python est a typage dynamique.
 - int, float, str, bool sont courants.
 - type(x) permet de verifier.
 ', 1, 3),
-                                                                     (42, 'OpÃ©rateurs', '## Objectif
+                                                                     (42, 'Opérateurs', '## Objectif
 Utiliser les operateurs arithmetiques et logiques.
 
 ## Exemple 1
@@ -1228,7 +1228,7 @@ ok = (a > 0) or (b < 0)
 print(ok)
 ```
 
-## Ã€ retenir
+## À retenir
 - `**` est la puissance, `//` la division entiere.
 - Comparaison: == != < > <= >=.
 - Logique: and, or, not.
@@ -1242,7 +1242,7 @@ note = 12
 if note >= 10:
     print("Admis")
 else:
-    print("AjournÃ©")
+    print("Ajourné")
 ```
 
 ## Exemple 2
@@ -1263,7 +1263,7 @@ status = "ok" if x > 0 else "ko"
 print(status)
 ```
 
-## Ã€ retenir
+## À retenir
 - L indentation definit les blocs.
 - elif permet des cas multiples.
 - Les conditions utilisent des booleens.
@@ -1293,7 +1293,7 @@ for i, v in enumerate(["a", "b", "c"]):
     print(i, v)
 ```
 
-## Ã€ retenir
+## À retenir
 - range(5) donne 0..4.
 - break arrete la boucle, continue saute un tour.
 - while depend dune condition.
@@ -1323,7 +1323,7 @@ def sum_all(*nums):
 print(sum_all(1, 2, 3))
 ```
 
-## Ã€ retenir
+## À retenir
 - Une fonction sans return renvoie None.
 - Les parametres peuvent avoir une valeur par defaut.
 - Les arguments peuvent etre nommes.
@@ -1352,7 +1352,7 @@ evens = [x for x in nums if x % 2 == 0]
 print(evens)
 ```
 
-## Ã€ retenir
+## À retenir
 - Les listes sont mutables.
 - Les indices commencent a 0.
 - Le slicing cree une sous-liste.
@@ -1381,7 +1381,7 @@ q, r = divmod2(7, 3)
 print(q, r)
 ```
 
-## Ã€ retenir
+## À retenir
 - Un tuple est immuable.
 - Une virgule cree un tuple a un element.
 - Le unpacking est pratique.
@@ -1408,7 +1408,7 @@ d = {x: x*x for x in range(3)}
 print(d)
 ```
 
-## Ã€ retenir
+## À retenir
 - Les cles sont uniques.
 - get permet une valeur par defaut.
 - items() renvoie des paires.
@@ -1439,12 +1439,12 @@ s.remove(1)
 print(s)
 ```
 
-## Ã€ retenir
+## À retenir
 - Un set ne garde pas les doublons.
 - Union: | , intersection: &.
 - Un set est non ordonne.
 ', 9, 3),
-                                                                     (50, 'ChaÃ®nes', '## Objectif
+                                                                     (50, 'Chaînes', '## Objectif
 Manipuler les chaines et leurs methodes.
 
 ## Exemple 1
@@ -1467,12 +1467,12 @@ words = "a b c".split()
 print("-".join(words))
 ```
 
-## Ã€ retenir
+## À retenir
 - Les chaines sont immuables.
 - Le slicing fonctionne comme sur les listes.
 - f-strings simplifient le format.
 ', 10, 3),
-                                                                     (51, 'EntrÃ©es / Sorties', '## Objectif
+                                                                     (51, 'Entrées / Sorties', '## Objectif
 Lire des donnees utilisateur et afficher des resultats.
 
 ## Exemple 1
@@ -1495,7 +1495,7 @@ y = 3
 print(f"{x} + {y} = {x+y}")
 ```
 
-## Ã€ retenir
+## À retenir
 - input() renvoie une chaine.
 - Convertir avec int() ou float().
 - print() accepte plusieurs arguments.
@@ -1522,7 +1522,7 @@ with open("out.txt", "a") as f:
     f.write("more\n")
 ```
 
-## Ã€ retenir
+## À retenir
 - with ferme le fichier automatiquement.
 - read() lit tout, readlines() lit par lignes.
 - Le mode "w" ecrase le fichier.
@@ -1555,7 +1555,7 @@ if x < 0:
     raise ValueError("negatif")
 ```
 
-## Ã€ retenir
+## À retenir
 - Attraper des exceptions precises.
 - finally est toujours execute.
 - Les erreurs ne doivent pas planter le programme.
@@ -1581,12 +1581,12 @@ import datetime as dt
 print(dt.date.today())
 ```
 
-## Ã€ retenir
+## À retenir
 - import charge un module.
 - from ... import ... importe des elements.
 - help(module) donne de la documentation.
 ', 14, 3),
-                                                                     (55, 'ComprÃ©hensions', '## Objectif
+                                                                     (55, 'Compréhensions', '## Objectif
 Ecrire des comprehensions pour creer des listes et dict.
 
 ## Exemple 1
@@ -1607,7 +1607,7 @@ s = {x*x for x in range(5)}
 print(s)
 ```
 
-## Ã€ retenir
+## À retenir
 - Les comprehensions sont concises.
 - Garder la lisibilite.
 - Elles remplacent souvent une boucle simple.
@@ -1636,7 +1636,7 @@ evens = list(filter(lambda x: x%2==0, nums))
 print(evens)
 ```
 
-## Ã€ retenir
+## À retenir
 - lambda cree une fonction anonyme courte.
 - Utilisee avec map, filter, sorted.
 - Pour du code long, preferer def.
@@ -1676,7 +1676,7 @@ c.inc()
 print(c.n)
 ```
 
-## Ã€ retenir
+## À retenir
 - self reference l objet courant.
 - __init__ initialise les attributs.
 - Une classe peut heriter dune autre.
@@ -1701,7 +1701,7 @@ print(r.status_code)
 pip freeze > requirements.txt
 ```
 
-## Ã€ retenir
+## À retenir
 - Utiliser un environnement virtuel.
 - pip installe les dependances.
 - requirements.txt liste les packages.
@@ -1735,7 +1735,7 @@ top = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:3]
 print(top)
 ```
 
-## Ã€ retenir
+## À retenir
 - split() decoupe en mots.
 - dict est ideal pour compter.
 - Normaliser en minuscules aide.
@@ -1744,7 +1744,7 @@ print(top)
 Reviser les notions principales de Python.
 
 Quiz final (15 questions).', 20, 3)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
@@ -2189,7 +2189,7 @@ std::cout << "ok";
 Comprendre Quiz final C++ en C++.
 
 Quiz final (15 questions).', 20, 4)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (81, 'Introduction MySQL', '## Objectif
@@ -2633,7 +2633,7 @@ SELECT 1;
 Comprendre Quiz final MySQL en MySQL.
 
 Quiz final (15 questions).', 20, 5)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (101, 'Variables et types', '## Objectif
@@ -3077,7 +3077,7 @@ Console.WriteLine("ok");
 Comprendre Quiz final C# en C#.
 
 Quiz final (15 questions).', 20, 6)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (121, 'Structure de page', '## Objectif
@@ -3522,7 +3522,7 @@ Comprendre Details et resume en HTML.
 Comprendre Quiz final HTML en HTML.
 
 Quiz final (15 questions).', 20, 7)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (141, 'Selecteurs', '## Objectif
@@ -3966,7 +3966,7 @@ Comprendre Overflow en CSS.
 Comprendre Specificite en CSS.
 
 Quiz final (15 questions).', 20, 8)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO lessons (id, title, content, order_index, course_id) VALUES
                                                                      (161, 'Variables', '## Objectif
@@ -4410,225 +4410,225 @@ console.log("ok");
 Comprendre Quiz final JavaScript en JavaScript.
 
 Quiz final (15 questions).', 20, 9)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, order_index = EXCLUDED.order_index, course_id = EXCLUDED.course_id;
 
 INSERT INTO exercises (id, type, question, choices_json, answer, explanation, order_index, lesson_id) VALUES
-                                                                    (1,  'MCQ', 'Quel type est utilisÃ© pour stocker un entier en C ?', '["char","int","float","double"]', 'int', 'int est le type standard pour les entiers.', 1, 1),
-                                                                    (2,  'MCQ', 'Quel caractÃ¨re termine une chaÃ®ne en C ?', '["\\n","\\t","\\0","\\r"]', '\0', 'Une chaÃ®ne C est terminÃ©e par le caractÃ¨re nul \\0.', 2, 1),
-                                                                    (3,  'MCQ', 'Quel format printf affiche un entier ?', '["%c","%d","%s","%f"]', '%d', '%d est utilisÃ© pour afficher un int.', 3, 1),
-                                                                    (4,  'MCQ', 'Quel opÃ©rateur teste lâ€™Ã©galitÃ© en C ?', '["=","==","!=","<="]', '==', '== compare deux valeurs.', 1, 2),
-                                                                    (5,  'MCQ', 'Quel opÃ©rateur logique signifie ET ?', '["||","&&","!","&"]', '&&', '&& est le ET logique.', 2, 2),
-                                                                    (6,  'MCQ', 'Quel opÃ©rateur incrÃ©mente de 1 ?', '["++","--","+=","**"]', '++', '++ ajoute 1.', 3, 2),
-                                                                    (7,  'MCQ', 'Quelle instruction exÃ©cute un bloc si une condition est vraie ?', '["if","else","case","break"]', 'if', 'if teste une condition.', 1, 3),
+                                                                    (1,  'MCQ', 'Quel type est utilisé pour stocker un entier en C ?', '["char","int","float","double"]', 'int', 'int est le type standard pour les entiers.', 1, 1),
+                                                                    (2,  'MCQ', 'Quel caractère termine une chaîne en C ?', '["\\n","\\t","\\0","\\r"]', '\0', 'Une chaîne C est terminée par le caractère nul \\0.', 2, 1),
+                                                                    (3,  'MCQ', 'Quel format printf affiche un entier ?', '["%c","%d","%s","%f"]', '%d', '%d est utilisé pour afficher un int.', 3, 1),
+                                                                    (4,  'MCQ', 'Quel opérateur teste l’égalité en C ?', '["=","==","!=","<="]', '==', '== compare deux valeurs.', 1, 2),
+                                                                    (5,  'MCQ', 'Quel opérateur logique signifie ET ?', '["||","&&","!","&"]', '&&', '&& est le ET logique.', 2, 2),
+                                                                    (6,  'MCQ', 'Quel opérateur incrémente de 1 ?', '["++","--","+=","**"]', '++', '++ ajoute 1.', 3, 2),
+                                                                    (7,  'MCQ', 'Quelle instruction exécute un bloc si une condition est vraie ?', '["if","else","case","break"]', 'if', 'if teste une condition.', 1, 3),
                                                                     (8,  'MCQ', 'Quelle structure permet un choix multiple ?', '["switch","for","scanf","return"]', 'switch', 'switch choisit selon une valeur.', 2, 3),
-                                                                    (9,  'MCQ', 'Quel mot-clÃ© sort dâ€™un switch ?', '["continue","break","return","goto"]', 'break', 'break arrÃªte le switch.', 3, 3),
-                                                                    (10, 'MCQ', 'Quelle boucle est adaptÃ©e si on connaÃ®t le nombre dâ€™itÃ©rations ?', '["if","for","switch","typedef"]', 'for', 'for est souvent utilisÃ© avec un compteur.', 1, 4),
-                                                                    (11, 'MCQ', 'Quelle boucle teste la condition au dÃ©but ?', '["do-while","while","switch","if"]', 'while', 'while teste avant dâ€™entrer.', 2, 4),
-                                                                    (12, 'MCQ', 'Quel mot-clÃ© passe Ã  lâ€™itÃ©ration suivante ?', '["break","continue","return","case"]', 'continue', 'continue saute Ã  lâ€™itÃ©ration suivante.', 3, 4),
-                                                                    (13, 'MCQ', 'Quel mot-clÃ© renvoie une valeur depuis une fonction ?', '["break","return","continue","printf"]', 'return', 'return renvoie une valeur.', 1, 5),
-                                                                    (14, 'MCQ', 'Comment dÃ©clare-t-on une fonction qui ne renvoie rien ?', '["int f()","void f()","char f()","none f()"]', 'void f()', 'void = pas de valeur retournÃ©e.', 2, 5),
-                                                                    (15, 'MCQ', 'Comment appelle-t-on une fonction add(a,b) ?', '["add[a,b]","add(a,b)","add{a,b}","call add"]', 'add(a,b)', 'Lâ€™appel se fait avec parenthÃ¨ses.', 3, 5),
-                                                                    (16, 'MCQ', 'Une variable locale est visible...', '["Partout","Dans la fonction seulement","Dans tout le fichier","Jamais"]', 'Dans la fonction seulement', 'Locale = limitÃ©e au bloc/fonction.', 1, 6),
-                                                                    (17, 'MCQ', 'Quel mot-clÃ© empÃªche la modification dâ€™une variable ?', '["static","const","extern","signed"]', 'const', 'const rend la variable constante.', 2, 6),
-                                                                    (18, 'MCQ', 'Quel mot-clÃ© conserve la valeur entre appels de fonction ?', '["static","auto","register","volatile"]', 'static', 'static conserve la valeur.', 3, 6),
-                                                                    (19, 'MCQ', 'Quel est lâ€™index du premier Ã©lÃ©ment dâ€™un tableau ?', '["1","0","-1","2"]', '0', 'Les indices commencent Ã  0.', 1, 7),
-                                                                    (20, 'MCQ', 'Comment accÃ©der au 3Ã¨me Ã©lÃ©ment t ?', '["t[3]","t[2]","t(2)","t{2}"]', 't[2]', '3Ã¨me Ã©lÃ©ment = index 2.', 2, 7),
-                                                                    (21, 'MCQ', 'Un tableau en C stocke...', '["Des types diffÃ©rents","Un seul type","Uniquement des strings","Uniquement des int"]', 'Un seul type', 'Un tableau contient un seul type.', 3, 7),
-                                                                    (22, 'MCQ', 'Quel type est souvent utilisÃ© pour manipuler une chaÃ®ne ?', '["String","char*","int[]","boolean"]', 'char*', 'Souvent char* ou char[] pour une chaÃ®ne.', 1, 8),
-                                                                    (23, 'MCQ', 'Quelle fonction calcule la longueur dâ€™une chaÃ®ne ?', '["strlen","strcmp","strcpy","scanf"]', 'strlen', 'strlen renvoie la longueur.', 2, 8),
-                                                                    (24, 'MCQ', 'Quelle fonction copie une chaÃ®ne ?', '["strcmp","strcpy","strlen","printf"]', 'strcpy', 'strcpy copie une chaÃ®ne.', 3, 8),
-                                                                    (25, 'MCQ', 'Quelle fonction lit une entrÃ©e formatÃ©e ?', '["printf","scanf","puts","fopen"]', 'scanf', 'scanf lit selon un format.', 1, 9),
+                                                                    (9,  'MCQ', 'Quel mot-clé sort d’un switch ?', '["continue","break","return","goto"]', 'break', 'break arrête le switch.', 3, 3),
+                                                                    (10, 'MCQ', 'Quelle boucle est adaptée si on connaît le nombre d’itérations ?', '["if","for","switch","typedef"]', 'for', 'for est souvent utilisé avec un compteur.', 1, 4),
+                                                                    (11, 'MCQ', 'Quelle boucle teste la condition au début ?', '["do-while","while","switch","if"]', 'while', 'while teste avant d’entrer.', 2, 4),
+                                                                    (12, 'MCQ', 'Quel mot-clé passe à l’itération suivante ?', '["break","continue","return","case"]', 'continue', 'continue saute à l’itération suivante.', 3, 4),
+                                                                    (13, 'MCQ', 'Quel mot-clé renvoie une valeur depuis une fonction ?', '["break","return","continue","printf"]', 'return', 'return renvoie une valeur.', 1, 5),
+                                                                    (14, 'MCQ', 'Comment déclare-t-on une fonction qui ne renvoie rien ?', '["int f()","void f()","char f()","none f()"]', 'void f()', 'void = pas de valeur retournée.', 2, 5),
+                                                                    (15, 'MCQ', 'Comment appelle-t-on une fonction add(a,b) ?', '["add[a,b]","add(a,b)","add{a,b}","call add"]', 'add(a,b)', 'L’appel se fait avec parenthèses.', 3, 5),
+                                                                    (16, 'MCQ', 'Une variable locale est visible...', '["Partout","Dans la fonction seulement","Dans tout le fichier","Jamais"]', 'Dans la fonction seulement', 'Locale = limitée au bloc/fonction.', 1, 6),
+                                                                    (17, 'MCQ', 'Quel mot-clé empêche la modification d’une variable ?', '["static","const","extern","signed"]', 'const', 'const rend la variable constante.', 2, 6),
+                                                                    (18, 'MCQ', 'Quel mot-clé conserve la valeur entre appels de fonction ?', '["static","auto","register","volatile"]', 'static', 'static conserve la valeur.', 3, 6),
+                                                                    (19, 'MCQ', 'Quel est l’index du premier élément d’un tableau ?', '["1","0","-1","2"]', '0', 'Les indices commencent à 0.', 1, 7),
+                                                                    (20, 'MCQ', 'Comment accéder au 3ème élément t ?', '["t[3]","t[2]","t(2)","t{2}"]', 't[2]', '3ème élément = index 2.', 2, 7),
+                                                                    (21, 'MCQ', 'Un tableau en C stocke...', '["Des types différents","Un seul type","Uniquement des strings","Uniquement des int"]', 'Un seul type', 'Un tableau contient un seul type.', 3, 7),
+                                                                    (22, 'MCQ', 'Quel type est souvent utilisé pour manipuler une chaîne ?', '["String","char*","int[]","boolean"]', 'char*', 'Souvent char* ou char[] pour une chaîne.', 1, 8),
+                                                                    (23, 'MCQ', 'Quelle fonction calcule la longueur d’une chaîne ?', '["strlen","strcmp","strcpy","scanf"]', 'strlen', 'strlen renvoie la longueur.', 2, 8),
+                                                                    (24, 'MCQ', 'Quelle fonction copie une chaîne ?', '["strcmp","strcpy","strlen","printf"]', 'strcpy', 'strcpy copie une chaîne.', 3, 8),
+                                                                    (25, 'MCQ', 'Quelle fonction lit une entrée formatée ?', '["printf","scanf","puts","fopen"]', 'scanf', 'scanf lit selon un format.', 1, 9),
                                                                     (26, 'MCQ', 'Quel format scanf lit un entier ?', '["%d","%s","%c","%f"]', '%d', '%d lit un int.', 2, 9),
                                                                     (27, 'MCQ', 'Quelle fonction affiche du texte ?', '["printf","scanf","malloc","free"]', 'printf', 'printf affiche selon un format.', 3, 9),
                                                                     (28, 'MCQ', 'Un pointeur stocke...', '["Une valeur","Une adresse","Un fichier","Un tableau"]', 'Une adresse', 'Un pointeur stocke une adresse.', 1, 10),
-                                                                    (29, 'MCQ', 'Quel opÃ©rateur obtient lâ€™adresse dâ€™une variable ?', '["*","&","->","."]', '&', '& retourne lâ€™adresse.', 2, 10),
-                                                                    (30, 'MCQ', 'Quel opÃ©rateur dÃ©rÃ©fÃ©rence un pointeur ?', '["*","&","%","!"]', '*', '* donne la valeur pointÃ©e.', 3, 10),
-                                                                    (31, 'MCQ', 't[i] Ã©quivaut Ã ...', '["&(t+i)","*(t+i)","*(t-i)","(t*i)"]', '*(t+i)', 'Indexation = arithmÃ©tique de pointeur.', 1, 11),
-                                                                    (32, 'MCQ', 'Un tableau passÃ© Ã  une fonction devient souvent...', '["Un int","Un pointeur","Un char","Un float"]', 'Un pointeur', 'Les tableaux dÃ©croissent en pointeurs.', 2, 11),
-                                                                    (33, 'MCQ', 'Quel est le type de &t[0] (si t est int t[]) ?', '["int","int*","int[]","char*"]', 'int*', 'Adresse du premier Ã©lÃ©ment = int*.', 3, 11),
-                                                                    (34, 'MCQ', 'Quelle fonction alloue de la mÃ©moire ?', '["malloc","free","fopen","printf"]', 'malloc', 'malloc alloue un bloc mÃ©moire.', 1, 12),
-                                                                    (35, 'MCQ', 'Quelle fonction libÃ¨re la mÃ©moire ?', '["calloc","free","realloc","sizeof"]', 'free', 'free libÃ¨re la mÃ©moire.', 2, 12),
-                                                                    (36, 'MCQ', 'Quelle fonction change la taille dâ€™un bloc mÃ©moire ?', '["malloc","realloc","free","scanf"]', 'realloc', 'realloc redimensionne.', 3, 12),
-                                                                    (37, 'MCQ', 'struct sert Ã ...', '["RÃ©pÃ©ter une boucle","Regrouper des champs","Ouvrir un fichier","Allouer mÃ©moire"]', 'Regrouper des champs', 'struct regroupe plusieurs variables.', 1, 13),
-                                                                    (38, 'MCQ', 'Quel opÃ©rateur accÃ¨de Ã  un champ dâ€™une struct (non pointeur) ?', '["->",".","*","&"]', '.', '. accÃ¨de au champ.', 2, 13),
-                                                                    (39, 'MCQ', 'Quel opÃ©rateur accÃ¨de Ã  un champ via pointeur de struct ?', '[".","->","&","%"]', '->', '-> accÃ¨de via pointeur.', 3, 13),
-                                                                    (40, 'MCQ', 'typedef sert Ã ...', '["CrÃ©er une boucle","CrÃ©er un alias de type","Ouvrir un fichier","Afficher du texte"]', 'CrÃ©er un alias de type', 'typedef renomme un type.', 1, 14),
-                                                                    (41, 'MCQ', 'enum sert Ã ...', '["CrÃ©er des constantes","Lire un fichier","Allouer mÃ©moire","Comparer chaÃ®nes"]', 'CrÃ©er des constantes', 'enum dÃ©finit des constantes.', 2, 14),
+                                                                    (29, 'MCQ', 'Quel opérateur obtient l’adresse d’une variable ?', '["*","&","->","."]', '&', '& retourne l’adresse.', 2, 10),
+                                                                    (30, 'MCQ', 'Quel opérateur déréférence un pointeur ?', '["*","&","%","!"]', '*', '* donne la valeur pointée.', 3, 10),
+                                                                    (31, 'MCQ', 't[i] équivaut à...', '["&(t+i)","*(t+i)","*(t-i)","(t*i)"]', '*(t+i)', 'Indexation = arithmétique de pointeur.', 1, 11),
+                                                                    (32, 'MCQ', 'Un tableau passé à une fonction devient souvent...', '["Un int","Un pointeur","Un char","Un float"]', 'Un pointeur', 'Les tableaux décroissent en pointeurs.', 2, 11),
+                                                                    (33, 'MCQ', 'Quel est le type de &t[0] (si t est int t[]) ?', '["int","int*","int[]","char*"]', 'int*', 'Adresse du premier élément = int*.', 3, 11),
+                                                                    (34, 'MCQ', 'Quelle fonction alloue de la mémoire ?', '["malloc","free","fopen","printf"]', 'malloc', 'malloc alloue un bloc mémoire.', 1, 12),
+                                                                    (35, 'MCQ', 'Quelle fonction libère la mémoire ?', '["calloc","free","realloc","sizeof"]', 'free', 'free libère la mémoire.', 2, 12),
+                                                                    (36, 'MCQ', 'Quelle fonction change la taille d’un bloc mémoire ?', '["malloc","realloc","free","scanf"]', 'realloc', 'realloc redimensionne.', 3, 12),
+                                                                    (37, 'MCQ', 'struct sert à...', '["Répéter une boucle","Regrouper des champs","Ouvrir un fichier","Allouer mémoire"]', 'Regrouper des champs', 'struct regroupe plusieurs variables.', 1, 13),
+                                                                    (38, 'MCQ', 'Quel opérateur accède à un champ d’une struct (non pointeur) ?', '["->",".","*","&"]', '.', '. accède au champ.', 2, 13),
+                                                                    (39, 'MCQ', 'Quel opérateur accède à un champ via pointeur de struct ?', '[".","->","&","%"]', '->', '-> accède via pointeur.', 3, 13),
+                                                                    (40, 'MCQ', 'typedef sert à...', '["Créer une boucle","Créer un alias de type","Ouvrir un fichier","Afficher du texte"]', 'Créer un alias de type', 'typedef renomme un type.', 1, 14),
+                                                                    (41, 'MCQ', 'enum sert à...', '["Créer des constantes","Lire un fichier","Allouer mémoire","Comparer chaînes"]', 'Créer des constantes', 'enum définit des constantes.', 2, 14),
                                                                     (42, 'MCQ', 'Quel exemple est un enum correct ?', '["enum A{X,Y};","enum=A;","enum (X,Y)","enum X=1"]', 'enum A{X,Y};', 'Syntaxe valide.', 3, 14),
                                                                     (43, 'MCQ', 'Quelle fonction ouvre un fichier ?', '["open","fopen","file","read"]', 'fopen', 'fopen ouvre un fichier.', 1, 15),
                                                                     (44, 'MCQ', 'Quelle fonction ferme un fichier ?', '["fclose","closefile","end","free"]', 'fclose', 'fclose ferme le fichier.', 2, 15),
-                                                                    (45, 'MCQ', 'Quelle fonction Ã©crit formatÃ© dans un fichier ?', '["fprintf","printf","scanf","fgets"]', 'fprintf', 'fprintf Ã©crit dans un fichier.', 3, 15),
-                                                                    (46, 'MCQ', 'La rÃ©cursivitÃ© signifie...', '["Une boucle infinie","Une fonction qui sâ€™appelle elle-mÃªme","Un tableau","Un fichier"]', 'Une fonction qui sâ€™appelle elle-mÃªme', 'RÃ©cursivitÃ© = appel de soi.', 1, 16),
-                                                                    (47, 'MCQ', 'Une fonction rÃ©cursive doit avoir...', '["Un switch","Un cas dâ€™arrÃªt","Un typedef","Un malloc"]', 'Un cas dâ€™arrÃªt', 'Sinon rÃ©cursion infinie.', 2, 16),
-                                                                    (48, 'MCQ', 'La rÃ©cursivitÃ© est souvent utilisÃ©e pour...', '["Tri","CSS","HTML","Audio"]', 'Tri', 'Exemple dâ€™usage: algorithmes.', 3, 16),
-                                                                    (49, 'MCQ', '#define sert Ã ...', '["DÃ©finir une macro","Lire un fichier","CrÃ©er une struct","CrÃ©er un pointeur"]', 'DÃ©finir une macro', 'Macro du prÃ©processeur.', 1, 17),
-                                                                    (50, 'MCQ', 'Quel est le rÃ´le de #include ?', '["Boucler","Importer un header","Allouer mÃ©moire","Afficher"]', 'Importer un header', '#include inclut un header.', 2, 17),
-                                                                    (51, 'MCQ', 'Une macro est traitÃ©e...', '["Ã€ lâ€™exÃ©cution","Avant compilation","AprÃ¨s exÃ©cution","Dans la DB"]', 'Avant compilation', 'PrÃ©processeur avant compilation.', 3, 17),
-                                                                    (52, 'MCQ', 'Un pointeur sur fonction pointe vers...', '["Une variable","Une fonction","Un fichier","Une struct"]', 'Une fonction', 'Adresse dâ€™une fonction.', 1, 18),
+                                                                    (45, 'MCQ', 'Quelle fonction écrit formaté dans un fichier ?', '["fprintf","printf","scanf","fgets"]', 'fprintf', 'fprintf écrit dans un fichier.', 3, 15),
+                                                                    (46, 'MCQ', 'La récursivité signifie...', '["Une boucle infinie","Une fonction qui s’appelle elle-même","Un tableau","Un fichier"]', 'Une fonction qui s’appelle elle-même', 'Récursivité = appel de soi.', 1, 16),
+                                                                    (47, 'MCQ', 'Une fonction récursive doit avoir...', '["Un switch","Un cas d’arrêt","Un typedef","Un malloc"]', 'Un cas d’arrêt', 'Sinon récursion infinie.', 2, 16),
+                                                                    (48, 'MCQ', 'La récursivité est souvent utilisée pour...', '["Tri","CSS","HTML","Audio"]', 'Tri', 'Exemple d’usage: algorithmes.', 3, 16),
+                                                                    (49, 'MCQ', '#define sert à...', '["Définir une macro","Lire un fichier","Créer une struct","Créer un pointeur"]', 'Définir une macro', 'Macro du préprocesseur.', 1, 17),
+                                                                    (50, 'MCQ', 'Quel est le rôle de #include ?', '["Boucler","Importer un header","Allouer mémoire","Afficher"]', 'Importer un header', '#include inclut un header.', 2, 17),
+                                                                    (51, 'MCQ', 'Une macro est traitée...', '["À l’exécution","Avant compilation","Après exécution","Dans la DB"]', 'Avant compilation', 'Préprocesseur avant compilation.', 3, 17),
+                                                                    (52, 'MCQ', 'Un pointeur sur fonction pointe vers...', '["Une variable","Une fonction","Un fichier","Une struct"]', 'Une fonction', 'Adresse d’une fonction.', 1, 18),
                                                                     (53, 'MCQ', 'Un usage courant des pointeurs sur fonctions ?', '["Callbacks","CSS","SQL","XML"]', 'Callbacks', 'Callbacks utilisent souvent ce concept.', 2, 18),
-                                                                    (54, 'MCQ', 'Quel exemple ressemble Ã  un appel via pf ?', '["pf()","pf->()","*pf","&pf()"]', 'pf()', 'On appelle pf() (ou (*pf)()).', 3, 18),
-                                                                    (55, 'MCQ', 'Pourquoi vÃ©rifier le retour de fopen ?', '["Pour la vitesse","Pour Ã©viter un crash si fichier absent","Pour compiler","Pour changer de type"]', 'Pour Ã©viter un crash si fichier absent', 'fopen peut retourner NULL.', 1, 19),
-                                                                    (56, 'MCQ', 'scanf peut Ã©chouer si...', '["Mauvais format","Enum absent","Struct vide","PrÃ©processeur"]', 'Mauvais format', 'EntrÃ©e incompatible avec le format.', 2, 19),
-                                                                    (57, 'MCQ', 'En cas dâ€™erreur, on peut aider le debug avec...', '["perror","malloc","typedef","switch"]', 'perror', 'perror affiche un message dâ€™erreur.', 3, 19),
-                                                                    (58, 'MCQ', 'Quel opÃ©rateur donne lâ€™adresse dâ€™une variable ?', '["*","&","->","."]', '&', '& retourne lâ€™adresse mÃ©moire.', 1, 20),
-                                                                    (59, 'MCQ', 'Quel opÃ©rateur dÃ©rÃ©fÃ©rence un pointeur ?', '["*","&","->","."]', '*', '* permet dâ€™accÃ©der Ã  la valeur pointÃ©e.', 2, 20),
-                                                                    (60, 'MCQ', 'Quel format printf affiche une chaÃ®ne ?', '["%d","%f","%s","%c"]', '%s', '%s affiche une chaÃ®ne.', 3, 20),
-                                                                    (61, 'MCQ', 'Quel est lâ€™index du premier Ã©lÃ©ment dâ€™un tableau ?', '["0","1","-1","2"]', '0', 'Indexation commence Ã  0.', 4, 20),
-                                                                    (62, 'MCQ', 'Quelle fonction compare deux chaÃ®nes ?', '["strlen","strcmp","strcpy","scanf"]', 'strcmp', 'strcmp compare le contenu.', 5, 20),
-                                                                    (63, 'MCQ', 'Quel caractÃ¨re termine une chaÃ®ne en C ?', '["\\n","\\t","\\0","\\r"]', '\0', 'Fin de chaÃ®ne: \\0.', 6, 20),
-                                                                    (64, 'MCQ', 'Quelle instruction sort dâ€™une boucle ?', '["break","continue","return","case"]', 'break', 'break sort de la boucle.', 7, 20),
-                                                                    (65, 'MCQ', 'Quelle boucle teste la condition au dÃ©but ?', '["while","do-while","switch","if"]', 'while', 'while teste avant dâ€™entrer.', 8, 20),
+                                                                    (54, 'MCQ', 'Quel exemple ressemble à un appel via pf ?', '["pf()","pf->()","*pf","&pf()"]', 'pf()', 'On appelle pf() (ou (*pf)()).', 3, 18),
+                                                                    (55, 'MCQ', 'Pourquoi vérifier le retour de fopen ?', '["Pour la vitesse","Pour éviter un crash si fichier absent","Pour compiler","Pour changer de type"]', 'Pour éviter un crash si fichier absent', 'fopen peut retourner NULL.', 1, 19),
+                                                                    (56, 'MCQ', 'scanf peut échouer si...', '["Mauvais format","Enum absent","Struct vide","Préprocesseur"]', 'Mauvais format', 'Entrée incompatible avec le format.', 2, 19),
+                                                                    (57, 'MCQ', 'En cas d’erreur, on peut aider le debug avec...', '["perror","malloc","typedef","switch"]', 'perror', 'perror affiche un message d’erreur.', 3, 19),
+                                                                    (58, 'MCQ', 'Quel opérateur donne l’adresse d’une variable ?', '["*","&","->","."]', '&', '& retourne l’adresse mémoire.', 1, 20),
+                                                                    (59, 'MCQ', 'Quel opérateur déréférence un pointeur ?', '["*","&","->","."]', '*', '* permet d’accéder à la valeur pointée.', 2, 20),
+                                                                    (60, 'MCQ', 'Quel format printf affiche une chaîne ?', '["%d","%f","%s","%c"]', '%s', '%s affiche une chaîne.', 3, 20),
+                                                                    (61, 'MCQ', 'Quel est l’index du premier élément d’un tableau ?', '["0","1","-1","2"]', '0', 'Indexation commence à 0.', 4, 20),
+                                                                    (62, 'MCQ', 'Quelle fonction compare deux chaînes ?', '["strlen","strcmp","strcpy","scanf"]', 'strcmp', 'strcmp compare le contenu.', 5, 20),
+                                                                    (63, 'MCQ', 'Quel caractère termine une chaîne en C ?', '["\\n","\\t","\\0","\\r"]', '\0', 'Fin de chaîne: \\0.', 6, 20),
+                                                                    (64, 'MCQ', 'Quelle instruction sort d’une boucle ?', '["break","continue","return","case"]', 'break', 'break sort de la boucle.', 7, 20),
+                                                                    (65, 'MCQ', 'Quelle boucle teste la condition au début ?', '["while","do-while","switch","if"]', 'while', 'while teste avant d’entrer.', 8, 20),
                                                                     (66, 'MCQ', 'malloc retourne...', '["Un int","Un pointeur","Un char","Un float"]', 'Un pointeur', 'malloc retourne void*.', 9, 20),
-                                                                    (67, 'MCQ', 'Quelle fonction libÃ¨re la mÃ©moire ?', '["malloc","free","strlen","scanf"]', 'free', 'free libÃ¨re la mÃ©moire.', 10, 20),
+                                                                    (67, 'MCQ', 'Quelle fonction libère la mémoire ?', '["malloc","free","strlen","scanf"]', 'free', 'free libère la mémoire.', 10, 20),
                                                                     (68, 'MCQ', 'Quelle fonction ouvre un fichier ?', '["open","fopen","file","read"]', 'fopen', 'fopen ouvre un fichier.', 11, 20),
                                                                     (69, 'MCQ', 'Quelle fonction ferme un fichier ?', '["fclose","close","free","end"]', 'fclose', 'fclose ferme le fichier.', 12, 20),
-                                                                    (70, 'MCQ', 'struct sert Ã ...', '["Regrouper des champs","Allouer mÃ©moire","Ouvrir un fichier","Afficher"]', 'Regrouper des champs', 'struct regroupe des variables.', 13, 20),
-                                                                    (71, 'MCQ', 'typedef sert Ã ...', '["CrÃ©er un alias de type","Boucler","Lire un fichier","Allouer mÃ©moire"]', 'CrÃ©er un alias de type', 'typedef renomme un type.', 14, 20),
-                                                                    (72, 'MCQ', 'Le prÃ©processeur traite...', '["AprÃ¨s exÃ©cution","Avant compilation","Dans la DB","Ã€ lâ€™exÃ©cution"]', 'Avant compilation', 'Il agit avant compilation.', 15, 20),
-                                                                    (73, 'MCQ', 'Quel type Java stocke un entier ?', '["int","String","boolean","char[]"]', 'int', 'int est utilisÃ© pour les entiers.', 1, 21),
-                                                                    (74, 'MCQ', 'Quel type Java stocke du texte ?', '["double","String","int","char"]', 'String', 'String reprÃ©sente du texte.', 2, 21),
-                                                                    (75, 'MCQ', 'Quel mot-clÃ© crÃ©e un objet ?', '["new","make","class","this"]', 'new', 'new instancie un objet.', 3, 21),
-                                                                    (76, 'MCQ', 'Pour comparer deux String, on utilise plutÃ´t...', '["==","equals()","!=","<="]', 'equals()', 'equals() compare le contenu.', 1, 22),
-                                                                    (77, 'MCQ', 'Quel opÃ©rateur signifie ET logique ?', '["||","&&","!","%"]', '&&', '&& est le ET logique.', 2, 22),
-                                                                    (78, 'MCQ', 'Quel opÃ©rateur incrÃ©mente ?', '["++","--","**","//"]', '++', '++ ajoute 1.', 3, 22),
-                                                                    (79, 'MCQ', 'Quelle instruction teste une condition ?', '["if","for","println","return"]', 'if', 'if exÃ©cute selon une condition.', 1, 23),
-                                                                    (80, 'MCQ', 'Quel mot-clÃ© gÃ¨re un choix multiple ?', '["switch","class","new","import"]', 'switch', 'switch choisit selon une valeur.', 2, 23),
-                                                                    (81, 'MCQ', 'Quel mot-clÃ© sort dâ€™un switch ?', '["break","continue","throw","static"]', 'break', 'break sort du switch.', 3, 23),
-                                                                    (82, 'MCQ', 'Quelle boucle est souvent utilisÃ©e avec un compteur ?', '["for","try","catch","enum"]', 'for', 'for convient au comptage.', 1, 24),
-                                                                    (83, 'MCQ', 'Quelle boucle teste au dÃ©but ?', '["while","do-while","switch","if"]', 'while', 'while teste avant dâ€™entrer.', 2, 24),
-                                                                    (84, 'MCQ', 'continue sert Ã ...', '["Sortir","Passer Ã  la suite","Lancer une exception","Importer"]', 'Passer Ã  la suite', 'continue saute Ã  lâ€™itÃ©ration suivante.', 3, 24),
-                                                                    (85, 'MCQ', 'Une mÃ©thode qui ne renvoie rien utilise...', '["void","null","none","empty"]', 'void', 'void = pas de retour.', 1, 25),
-                                                                    (86, 'MCQ', 'Une mÃ©thode static appartient Ã ...', '["Lâ€™objet","La classe","Le fichier","La DB"]', 'La classe', 'static appartient Ã  la classe.', 2, 25),
-                                                                    (87, 'MCQ', 'return sert Ã ...', '["Renvoyer une valeur","Importer","Boucler","CrÃ©er un objet"]', 'Renvoyer une valeur', 'return renvoie une valeur.', 3, 25),
-                                                                    (88, 'MCQ', 'Une classe est...', '["Un modÃ¨le","Une boucle","Un fichier","Une variable"]', 'Un modÃ¨le', 'Une classe modÃ©lise des objets.', 1, 26),
-                                                                    (89, 'MCQ', 'Un objet est crÃ©Ã© avec...', '["new","static","extends","package"]', 'new', 'new crÃ©e une instance.', 2, 26),
-                                                                    (90, 'MCQ', 'this rÃ©fÃ©rence...', '["Le parent","Lâ€™objet courant","Le package","Le fichier"]', 'Lâ€™objet courant', 'this = objet actuel.', 3, 26),
-                                                                    (91, 'MCQ', 'Un constructeur a le mÃªme nom que...', '["La classe","La mÃ©thode","Le package","Le fichier"]', 'La classe', 'Constructeur = nom de classe.', 1, 27),
-                                                                    (92, 'MCQ', 'Un constructeur dÃ©clare un type de retour ?', '["Oui","Non","Seulement int","Seulement void"]', 'Non', 'Le constructeur nâ€™a pas de type.', 2, 27),
-                                                                    (93, 'MCQ', 'super() sert Ã ...', '["Appeler le parent","CrÃ©er une interface","Lancer une exception","Boucler"]', 'Appeler le parent', 'super() appelle le constructeur parent.', 3, 27),
-                                                                    (94, 'MCQ', 'Encapsulation signifie...', '["public partout","private + accÃ¨s contrÃ´lÃ©","pas de classe","pas de mÃ©thode"]', 'private + accÃ¨s contrÃ´lÃ©', 'On protÃ¨ge via private + getters/setters.', 1, 28),
-                                                                    (95, 'MCQ', 'Quel modificateur cache un attribut ?', '["public","private","protected","static"]', 'private', 'private limite lâ€™accÃ¨s.', 2, 28),
-                                                                    (96, 'MCQ', 'Les getters servent Ã ...', '["Lire un attribut","CrÃ©er un objet","Importer","Boucler"]', 'Lire un attribut', 'Getter = lecture contrÃ´lÃ©e.', 3, 28),
-                                                                    (97, 'MCQ', 'Quel mot-clÃ© permet lâ€™hÃ©ritage ?', '["extends","implements","import","package"]', 'extends', 'extends indique lâ€™hÃ©ritage.', 1, 29),
-                                                                    (98, 'MCQ', 'super rÃ©fÃ©rence...', '["Le parent","Le fichier","La DB","Le package"]', 'Le parent', 'super = classe parente.', 2, 29),
-                                                                    (99, 'MCQ', 'Override signifie...', '["RedÃ©finir une mÃ©thode","Surcharger un constructeur","CrÃ©er un package","Importer"]', 'RedÃ©finir une mÃ©thode', 'Override = redÃ©finition.', 3, 29),
-                                                                    (100,'MCQ', 'Polymorphisme signifie...', '["Plusieurs formes","Une seule forme","Pas dâ€™objets","Pas de classes"]', 'Plusieurs formes', 'RÃ©fÃ©rence parent vers enfant.', 1, 30),
-                                                                    (101,'MCQ', 'Le polymorphisme est liÃ© Ã ...', '["HÃ©ritage","HTML","CSS","SQL"]', 'HÃ©ritage', 'Souvent via hÃ©ritage/interfaces.', 2, 30),
-                                                                    (102,'MCQ', 'Overloading signifie...', '["Surcharge","RedÃ©finition","Import","Compilation"]', 'Surcharge', 'Overloading = mÃªmes noms, paramÃ¨tres diffÃ©rents.', 3, 30),
-                                                                    (103,'MCQ', 'Une interface est...', '["Un contrat","Une boucle","Une variable","Un fichier texte"]', 'Un contrat', 'Une interface dÃ©finit un contrat.', 1, 31),
-                                                                    (104,'MCQ', 'Quel mot-clÃ© implÃ©mente une interface ?', '["implements","extends","new","this"]', 'implements', 'implements lie Ã  une interface.', 2, 31),
-                                                                    (105,'MCQ', 'Une classe peut implÃ©menter...', '["Plusieurs interfaces","Une seule interface","Aucune mÃ©thode","Uniquement String"]', 'Plusieurs interfaces', 'Java permet plusieurs interfaces.', 3, 31),
+                                                                    (70, 'MCQ', 'struct sert à...', '["Regrouper des champs","Allouer mémoire","Ouvrir un fichier","Afficher"]', 'Regrouper des champs', 'struct regroupe des variables.', 13, 20),
+                                                                    (71, 'MCQ', 'typedef sert à...', '["Créer un alias de type","Boucler","Lire un fichier","Allouer mémoire"]', 'Créer un alias de type', 'typedef renomme un type.', 14, 20),
+                                                                    (72, 'MCQ', 'Le préprocesseur traite...', '["Après exécution","Avant compilation","Dans la DB","À l’exécution"]', 'Avant compilation', 'Il agit avant compilation.', 15, 20),
+                                                                    (73, 'MCQ', 'Quel type Java stocke un entier ?', '["int","String","boolean","char[]"]', 'int', 'int est utilisé pour les entiers.', 1, 21),
+                                                                    (74, 'MCQ', 'Quel type Java stocke du texte ?', '["double","String","int","char"]', 'String', 'String représente du texte.', 2, 21),
+                                                                    (75, 'MCQ', 'Quel mot-clé crée un objet ?', '["new","make","class","this"]', 'new', 'new instancie un objet.', 3, 21),
+                                                                    (76, 'MCQ', 'Pour comparer deux String, on utilise plutôt...', '["==","equals()","!=","<="]', 'equals()', 'equals() compare le contenu.', 1, 22),
+                                                                    (77, 'MCQ', 'Quel opérateur signifie ET logique ?', '["||","&&","!","%"]', '&&', '&& est le ET logique.', 2, 22),
+                                                                    (78, 'MCQ', 'Quel opérateur incrémente ?', '["++","--","**","//"]', '++', '++ ajoute 1.', 3, 22),
+                                                                    (79, 'MCQ', 'Quelle instruction teste une condition ?', '["if","for","println","return"]', 'if', 'if exécute selon une condition.', 1, 23),
+                                                                    (80, 'MCQ', 'Quel mot-clé gère un choix multiple ?', '["switch","class","new","import"]', 'switch', 'switch choisit selon une valeur.', 2, 23),
+                                                                    (81, 'MCQ', 'Quel mot-clé sort d’un switch ?', '["break","continue","throw","static"]', 'break', 'break sort du switch.', 3, 23),
+                                                                    (82, 'MCQ', 'Quelle boucle est souvent utilisée avec un compteur ?', '["for","try","catch","enum"]', 'for', 'for convient au comptage.', 1, 24),
+                                                                    (83, 'MCQ', 'Quelle boucle teste au début ?', '["while","do-while","switch","if"]', 'while', 'while teste avant d’entrer.', 2, 24),
+                                                                    (84, 'MCQ', 'continue sert à...', '["Sortir","Passer à la suite","Lancer une exception","Importer"]', 'Passer à la suite', 'continue saute à l’itération suivante.', 3, 24),
+                                                                    (85, 'MCQ', 'Une méthode qui ne renvoie rien utilise...', '["void","null","none","empty"]', 'void', 'void = pas de retour.', 1, 25),
+                                                                    (86, 'MCQ', 'Une méthode static appartient à...', '["L’objet","La classe","Le fichier","La DB"]', 'La classe', 'static appartient à la classe.', 2, 25),
+                                                                    (87, 'MCQ', 'return sert à...', '["Renvoyer une valeur","Importer","Boucler","Créer un objet"]', 'Renvoyer une valeur', 'return renvoie une valeur.', 3, 25),
+                                                                    (88, 'MCQ', 'Une classe est...', '["Un modèle","Une boucle","Un fichier","Une variable"]', 'Un modèle', 'Une classe modélise des objets.', 1, 26),
+                                                                    (89, 'MCQ', 'Un objet est créé avec...', '["new","static","extends","package"]', 'new', 'new crée une instance.', 2, 26),
+                                                                    (90, 'MCQ', 'this référence...', '["Le parent","L’objet courant","Le package","Le fichier"]', 'L’objet courant', 'this = objet actuel.', 3, 26),
+                                                                    (91, 'MCQ', 'Un constructeur a le même nom que...', '["La classe","La méthode","Le package","Le fichier"]', 'La classe', 'Constructeur = nom de classe.', 1, 27),
+                                                                    (92, 'MCQ', 'Un constructeur déclare un type de retour ?', '["Oui","Non","Seulement int","Seulement void"]', 'Non', 'Le constructeur n’a pas de type.', 2, 27),
+                                                                    (93, 'MCQ', 'super() sert à...', '["Appeler le parent","Créer une interface","Lancer une exception","Boucler"]', 'Appeler le parent', 'super() appelle le constructeur parent.', 3, 27),
+                                                                    (94, 'MCQ', 'Encapsulation signifie...', '["public partout","private + accès contrôlé","pas de classe","pas de méthode"]', 'private + accès contrôlé', 'On protège via private + getters/setters.', 1, 28),
+                                                                    (95, 'MCQ', 'Quel modificateur cache un attribut ?', '["public","private","protected","static"]', 'private', 'private limite l’accès.', 2, 28),
+                                                                    (96, 'MCQ', 'Les getters servent à...', '["Lire un attribut","Créer un objet","Importer","Boucler"]', 'Lire un attribut', 'Getter = lecture contrôlée.', 3, 28),
+                                                                    (97, 'MCQ', 'Quel mot-clé permet l’héritage ?', '["extends","implements","import","package"]', 'extends', 'extends indique l’héritage.', 1, 29),
+                                                                    (98, 'MCQ', 'super référence...', '["Le parent","Le fichier","La DB","Le package"]', 'Le parent', 'super = classe parente.', 2, 29),
+                                                                    (99, 'MCQ', 'Override signifie...', '["Redéfinir une méthode","Surcharger un constructeur","Créer un package","Importer"]', 'Redéfinir une méthode', 'Override = redéfinition.', 3, 29),
+                                                                    (100,'MCQ', 'Polymorphisme signifie...', '["Plusieurs formes","Une seule forme","Pas d’objets","Pas de classes"]', 'Plusieurs formes', 'Référence parent vers enfant.', 1, 30),
+                                                                    (101,'MCQ', 'Le polymorphisme est lié à...', '["Héritage","HTML","CSS","SQL"]', 'Héritage', 'Souvent via héritage/interfaces.', 2, 30),
+                                                                    (102,'MCQ', 'Overloading signifie...', '["Surcharge","Redéfinition","Import","Compilation"]', 'Surcharge', 'Overloading = mêmes noms, paramètres différents.', 3, 30),
+                                                                    (103,'MCQ', 'Une interface est...', '["Un contrat","Une boucle","Une variable","Un fichier texte"]', 'Un contrat', 'Une interface définit un contrat.', 1, 31),
+                                                                    (104,'MCQ', 'Quel mot-clé implémente une interface ?', '["implements","extends","new","this"]', 'implements', 'implements lie à une interface.', 2, 31),
+                                                                    (105,'MCQ', 'Une classe peut implémenter...', '["Plusieurs interfaces","Une seule interface","Aucune méthode","Uniquement String"]', 'Plusieurs interfaces', 'Java permet plusieurs interfaces.', 3, 31),
                                                                     (106,'MCQ', 'Quel bloc intercepte une exception ?', '["catch","throw","static","final"]', 'catch', 'catch intercepte.', 1, 32),
-                                                                    (107,'MCQ', 'Quel bloc sâ€™exÃ©cute toujours ?', '["try","catch","finally","switch"]', 'finally', 'finally sâ€™exÃ©cute toujours.', 2, 32),
-                                                                    (108,'MCQ', 'throw sert Ã ...', '["Lancer une exception","Importer","Boucler","CrÃ©er un objet"]', 'Lancer une exception', 'throw lance une exception.', 3, 32),
-                                                                    (109,'MCQ', 'Une List...', '["Accepte les doublons","Refuse les doublons","Nâ€™a pas dâ€™ordre","Nâ€™existe pas"]', 'Accepte les doublons', 'List accepte doublons et ordre.', 1, 33),
-                                                                    (110,'MCQ', 'ImplÃ©mentation courante de List ?', '["HashMap","ArrayList","TreeSet","File"]', 'ArrayList', 'ArrayList est trÃ¨s utilisÃ©e.', 2, 33),
-                                                                    (111,'MCQ', 'Index dâ€™une List commence Ã ...', '["1","0","-1","2"]', '0', 'Indexation Ã  0.', 3, 33),
-                                                                    (112,'MCQ', 'Une Map stocke...', '["ClÃ©/Valeur","Valeurs seulement","Boucles","Fichiers"]', 'ClÃ©/Valeur', 'Map associe une clÃ© Ã  une valeur.', 1, 34),
-                                                                    (113,'MCQ', 'Une clÃ© dans une Map doit Ãªtre...', '["Unique","DupliquÃ©e","Toujours int","Toujours String"]', 'Unique', 'ClÃ©s uniques.', 2, 34),
-                                                                    (114,'MCQ', 'ImplÃ©mentation courante de Map ?', '["HashMap","ArrayList","Scanner","String"]', 'HashMap', 'HashMap est la plus utilisÃ©e.', 3, 34),
-                                                                    (115,'MCQ', 'Les gÃ©nÃ©riques servent Ã ...', '["SÃ©curiser les types","Ajouter du CSS","Ouvrir un fichier","CrÃ©er une exception"]', 'SÃ©curiser les types', 'Ils Ã©vitent les casts.', 1, 35),
+                                                                    (107,'MCQ', 'Quel bloc s’exécute toujours ?', '["try","catch","finally","switch"]', 'finally', 'finally s’exécute toujours.', 2, 32),
+                                                                    (108,'MCQ', 'throw sert à...', '["Lancer une exception","Importer","Boucler","Créer un objet"]', 'Lancer une exception', 'throw lance une exception.', 3, 32),
+                                                                    (109,'MCQ', 'Une List...', '["Accepte les doublons","Refuse les doublons","N’a pas d’ordre","N’existe pas"]', 'Accepte les doublons', 'List accepte doublons et ordre.', 1, 33),
+                                                                    (110,'MCQ', 'Implémentation courante de List ?', '["HashMap","ArrayList","TreeSet","File"]', 'ArrayList', 'ArrayList est très utilisée.', 2, 33),
+                                                                    (111,'MCQ', 'Index d’une List commence à...', '["1","0","-1","2"]', '0', 'Indexation à 0.', 3, 33),
+                                                                    (112,'MCQ', 'Une Map stocke...', '["Clé/Valeur","Valeurs seulement","Boucles","Fichiers"]', 'Clé/Valeur', 'Map associe une clé à une valeur.', 1, 34),
+                                                                    (113,'MCQ', 'Une clé dans une Map doit être...', '["Unique","Dupliquée","Toujours int","Toujours String"]', 'Unique', 'Clés uniques.', 2, 34),
+                                                                    (114,'MCQ', 'Implémentation courante de Map ?', '["HashMap","ArrayList","Scanner","String"]', 'HashMap', 'HashMap est la plus utilisée.', 3, 34),
+                                                                    (115,'MCQ', 'Les génériques servent à...', '["Sécuriser les types","Ajouter du CSS","Ouvrir un fichier","Créer une exception"]', 'Sécuriser les types', 'Ils évitent les casts.', 1, 35),
                                                                     (116,'MCQ', 'Quel exemple est correct ?', '["List<int>","List<String>","List<list>","List<var>"]', 'List<String>', 'On met un type objet, ex String.', 2, 35),
-                                                                    (117,'MCQ', 'Sans gÃ©nÃ©riques, on risque...', '["Plus de casts","Moins de mÃ©moire","Plus de vitesse","Pas de compilation"]', 'Plus de casts', 'On doit caster manuellement.', 3, 35),
+                                                                    (117,'MCQ', 'Sans génériques, on risque...', '["Plus de casts","Moins de mémoire","Plus de vitesse","Pas de compilation"]', 'Plus de casts', 'On doit caster manuellement.', 3, 35),
                                                                     (118,'MCQ', 'Classe qui lit un fichier ligne par ligne ?', '["BufferedReader","HashMap","ArrayList","Math"]', 'BufferedReader', 'BufferedReader lit efficacement.', 1, 36),
-                                                                    (119,'MCQ', 'Dans java.nio, quelle classe utilitaire existe ?', '["Files","Lists","Maps","Strings"]', 'Files', 'Files aide Ã  lire/Ã©crire.', 2, 36),
+                                                                    (119,'MCQ', 'Dans java.nio, quelle classe utilitaire existe ?', '["Files","Lists","Maps","Strings"]', 'Files', 'Files aide à lire/écrire.', 2, 36),
                                                                     (120,'MCQ', 'Lire un fichier peut provoquer...', '["Une exception","Un enum","Un cast","Un switch"]', 'Une exception', 'IO peut lancer IOException.', 3, 36),
                                                                     (121,'MCQ', 'Classe pour une date sans heure ?', '["LocalDate","DateTime","Calendar","System"]', 'LocalDate', 'LocalDate = date.', 1, 37),
                                                                     (122,'MCQ', 'Package moderne pour le temps ?', '["java.time","java.clock","java.util.time","java.date"]', 'java.time', 'java.time est moderne.', 2, 37),
                                                                     (123,'MCQ', 'LocalDateTime contient...', '["Date+heure","Heure seulement","Date seulement","Fichier"]', 'Date+heure', 'LocalDateTime combine date et heure.', 3, 37),
-                                                                    (124,'MCQ', 'Stream permet de...', '["Traiter des collections","Compiler","Dessiner","CrÃ©er des fichiers"]', 'Traiter des collections', 'Stream traite en pipeline.', 1, 38),
-                                                                    (125,'MCQ', 'OpÃ©ration pour filtrer ?', '["filter","map","reduce","print"]', 'filter', 'filter sÃ©lectionne.', 2, 38),
-                                                                    (126,'MCQ', 'OpÃ©ration pour transformer ?', '["map","catch","throw","extends"]', 'map', 'map transforme.', 3, 38),
-                                                                    (127,'MCQ', 'Une ToDo doit permettre...', '["Ajouter","Changer Java","CrÃ©er un pointeur","Compiler seulement"]', 'Ajouter', 'Fonction minimale: ajouter.', 1, 39),
-                                                                    (128,'MCQ', 'Type adaptÃ© pour stocker des tÃ¢ches ?', '["ArrayList","HashMap","int","double"]', 'ArrayList', 'Liste de tÃ¢ches = ArrayList.', 2, 39),
+                                                                    (124,'MCQ', 'Stream permet de...', '["Traiter des collections","Compiler","Dessiner","Créer des fichiers"]', 'Traiter des collections', 'Stream traite en pipeline.', 1, 38),
+                                                                    (125,'MCQ', 'Opération pour filtrer ?', '["filter","map","reduce","print"]', 'filter', 'filter sélectionne.', 2, 38),
+                                                                    (126,'MCQ', 'Opération pour transformer ?', '["map","catch","throw","extends"]', 'map', 'map transforme.', 3, 38),
+                                                                    (127,'MCQ', 'Une ToDo doit permettre...', '["Ajouter","Changer Java","Créer un pointeur","Compiler seulement"]', 'Ajouter', 'Fonction minimale: ajouter.', 1, 39),
+                                                                    (128,'MCQ', 'Type adapté pour stocker des tâches ?', '["ArrayList","HashMap","int","double"]', 'ArrayList', 'Liste de tâches = ArrayList.', 2, 39),
                                                                     (129,'MCQ', 'Affichage console en Java ?', '["System.out.println","printf","scanf","malloc"]', 'System.out.println', 'println affiche.', 3, 39),
-                                                                    (130,'MCQ', 'Quel mot-clÃ© crÃ©e un objet ?', '["new","class","this","static"]', 'new', 'new instancie.', 1, 40),
+                                                                    (130,'MCQ', 'Quel mot-clé crée un objet ?', '["new","class","this","static"]', 'new', 'new instancie.', 1, 40),
                                                                     (131,'MCQ', 'Pour comparer deux String, on utilise...', '["==","equals()","!=","<="]', 'equals()', 'equals compare le contenu.', 2, 40),
-                                                                    (132,'MCQ', 'Quel mot-clÃ© permet lâ€™hÃ©ritage ?', '["extends","implements","import","package"]', 'extends', 'extends = hÃ©ritage.', 3, 40),
-                                                                    (133,'MCQ', 'Quel mot-clÃ© implÃ©mente une interface ?', '["implements","extends","new","this"]', 'implements', 'implements = interface.', 4, 40),
+                                                                    (132,'MCQ', 'Quel mot-clé permet l’héritage ?', '["extends","implements","import","package"]', 'extends', 'extends = héritage.', 3, 40),
+                                                                    (133,'MCQ', 'Quel mot-clé implémente une interface ?', '["implements","extends","new","this"]', 'implements', 'implements = interface.', 4, 40),
                                                                     (134,'MCQ', 'Quel bloc intercepte une exception ?', '["catch","throw","try","finally"]', 'catch', 'catch intercepte.', 5, 40),
-                                                                    (135,'MCQ', 'Quel bloc sâ€™exÃ©cute toujours ?', '["try","catch","finally","switch"]', 'finally', 'finally sâ€™exÃ©cute toujours.', 6, 40),
-                                                                    (136,'MCQ', 'Une List...', '["Accepte les doublons","Refuse les doublons","Nâ€™a pas dâ€™ordre","Nâ€™existe pas"]', 'Accepte les doublons', 'List accepte doublons.', 7, 40),
-                                                                    (137,'MCQ', 'Une Map stocke...', '["ClÃ©/Valeur","Valeurs seulement","Ordre seulement","Fichiers"]', 'ClÃ©/Valeur', 'Map = clÃ©/valeur.', 8, 40),
-                                                                    (138,'MCQ', 'ImplÃ©mentation courante de List ?', '["ArrayList","HashMap","Files","Math"]', 'ArrayList', 'ArrayList est courante.', 9, 40),
-                                                                    (139,'MCQ', 'ImplÃ©mentation courante de Map ?', '["HashMap","ArrayList","Scanner","String"]', 'HashMap', 'HashMap est courante.', 10, 40),
-                                                                    (140,'MCQ', 'Les gÃ©nÃ©riques servent Ã ...', '["SÃ©curiser les types","Dessiner","Compiler","Ouvrir un port"]', 'SÃ©curiser les types', 'Ils Ã©vitent les casts.', 11, 40),
+                                                                    (135,'MCQ', 'Quel bloc s’exécute toujours ?', '["try","catch","finally","switch"]', 'finally', 'finally s’exécute toujours.', 6, 40),
+                                                                    (136,'MCQ', 'Une List...', '["Accepte les doublons","Refuse les doublons","N’a pas d’ordre","N’existe pas"]', 'Accepte les doublons', 'List accepte doublons.', 7, 40),
+                                                                    (137,'MCQ', 'Une Map stocke...', '["Clé/Valeur","Valeurs seulement","Ordre seulement","Fichiers"]', 'Clé/Valeur', 'Map = clé/valeur.', 8, 40),
+                                                                    (138,'MCQ', 'Implémentation courante de List ?', '["ArrayList","HashMap","Files","Math"]', 'ArrayList', 'ArrayList est courante.', 9, 40),
+                                                                    (139,'MCQ', 'Implémentation courante de Map ?', '["HashMap","ArrayList","Scanner","String"]', 'HashMap', 'HashMap est courante.', 10, 40),
+                                                                    (140,'MCQ', 'Les génériques servent à...', '["Sécuriser les types","Dessiner","Compiler","Ouvrir un port"]', 'Sécuriser les types', 'Ils évitent les casts.', 11, 40),
                                                                     (141,'MCQ', 'Classe qui lit un fichier ligne par ligne ?', '["BufferedReader","ArrayList","HashMap","LocalDate"]', 'BufferedReader', 'Lecture ligne par ligne.', 12, 40),
                                                                     (142,'MCQ', 'Package moderne pour les dates ?', '["java.time","java.util.time","java.clock","java.date"]', 'java.time', 'java.time est moderne.', 13, 40),
-                                                                    (143,'MCQ', 'Stream sert Ã ...', '["Traiter des collections","CrÃ©er une DB","Compiler","Dessiner"]', 'Traiter des collections', 'Pipeline de traitement.', 14, 40),
-                                                                    (144,'MCQ', 'Polymorphisme signifie...', '["Plusieurs formes","Une seule forme","Pas dâ€™objets","Pas de classes"]', 'Plusieurs formes', 'RÃ©fÃ©rence parent vers enfant.', 15, 40),
-                                                                    (145,'MCQ', 'Comment affecter une valeur Ã  une variable en Python ?', '["int x=5","x := 5","x = 5","var x = 5"]', 'x = 5', 'En Python, on affecte avec =.', 1, 41),
-                                                                    (146,'MCQ', 'Quel type reprÃ©sente du texte ?', '["int","str","float","bool"]', 'str', 'Le type texte est str.', 2, 41),
-                                                                    (147,'MCQ', 'Quel mot-clÃ© crÃ©e une variable ?', '["var","let","Aucun","new"]', 'Aucun', 'Pas de mot-clÃ© pour crÃ©er une variable.', 3, 41),
-                                                                    (148,'MCQ', 'Quel opÃ©rateur signifie puissance ?', '["^","**","//","%"]', '**', '** calcule la puissance.', 1, 42),
-                                                                    (149,'MCQ', 'Quel opÃ©rateur signifie division entiÃ¨re ?', '["/","//","%","**"]', '//', '// est la division entiÃ¨re.', 2, 42),
-                                                                    (150,'MCQ', 'Quel opÃ©rateur logique signifie ET ?', '["&&","and","AND","&"]', 'and', 'and est le ET logique.', 3, 42),
-                                                                    (151,'MCQ', 'Quelle instruction dÃ©marre une condition ?', '["if","switch","case","then"]', 'if', 'if dÃ©marre une condition.', 1, 43),
+                                                                    (143,'MCQ', 'Stream sert à...', '["Traiter des collections","Créer une DB","Compiler","Dessiner"]', 'Traiter des collections', 'Pipeline de traitement.', 14, 40),
+                                                                    (144,'MCQ', 'Polymorphisme signifie...', '["Plusieurs formes","Une seule forme","Pas d’objets","Pas de classes"]', 'Plusieurs formes', 'Référence parent vers enfant.', 15, 40),
+                                                                    (145,'MCQ', 'Comment affecter une valeur à une variable en Python ?', '["int x=5","x := 5","x = 5","var x = 5"]', 'x = 5', 'En Python, on affecte avec =.', 1, 41),
+                                                                    (146,'MCQ', 'Quel type représente du texte ?', '["int","str","float","bool"]', 'str', 'Le type texte est str.', 2, 41),
+                                                                    (147,'MCQ', 'Quel mot-clé crée une variable ?', '["var","let","Aucun","new"]', 'Aucun', 'Pas de mot-clé pour créer une variable.', 3, 41),
+                                                                    (148,'MCQ', 'Quel opérateur signifie puissance ?', '["^","**","//","%"]', '**', '** calcule la puissance.', 1, 42),
+                                                                    (149,'MCQ', 'Quel opérateur signifie division entière ?', '["/","//","%","**"]', '//', '// est la division entière.', 2, 42),
+                                                                    (150,'MCQ', 'Quel opérateur logique signifie ET ?', '["&&","and","AND","&"]', 'and', 'and est le ET logique.', 3, 42),
+                                                                    (151,'MCQ', 'Quelle instruction démarre une condition ?', '["if","switch","case","then"]', 'if', 'if démarre une condition.', 1, 43),
                                                                     (152,'MCQ', 'elif signifie...', '["else if","end if","equal if","error if"]', 'else if', 'elif = else if.', 2, 43),
-                                                                    (153,'MCQ', 'Quel bloc correspond Ã  "sinon" ?', '["else","elif","otherwise","default"]', 'else', 'else = sinon.', 3, 43),
-                                                                    (154,'MCQ', 'Comment boucler de 0 Ã  4 ?', '["for i in range(5)","for(i=0;i<5;i++)","repeat(5)","loop 5"]', 'for i in range(5)', 'range(5) donne 0..4.', 1, 44),
-                                                                    (155,'MCQ', 'Une boucle while sâ€™arrÃªte quand...', '["Condition vraie","Condition fausse","Toujours","Jamais"]', 'Condition fausse', 'while continue tant que condition vraie.', 2, 44),
+                                                                    (153,'MCQ', 'Quel bloc correspond à "sinon" ?', '["else","elif","otherwise","default"]', 'else', 'else = sinon.', 3, 43),
+                                                                    (154,'MCQ', 'Comment boucler de 0 à 4 ?', '["for i in range(5)","for(i=0;i<5;i++)","repeat(5)","loop 5"]', 'for i in range(5)', 'range(5) donne 0..4.', 1, 44),
+                                                                    (155,'MCQ', 'Une boucle while s’arrête quand...', '["Condition vraie","Condition fausse","Toujours","Jamais"]', 'Condition fausse', 'while continue tant que condition vraie.', 2, 44),
                                                                     (156,'MCQ', 'range(3) produit...', '["1..3","0..2","0..3","2..3"]', '0..2', 'range(3) = 0,1,2.', 3, 44),
-                                                                    (157,'MCQ', 'Comment dÃ©finir une fonction ?', '["function f()","def f():","fun f()","void f()"]', 'def f():', 'def dÃ©finit une fonction.', 1, 45),
-                                                                    (158,'MCQ', 'Quel mot-clÃ© renvoie une valeur ?', '["return","give","back","send"]', 'return', 'return renvoie une valeur.', 2, 45),
-                                                                    (159,'MCQ', 'Une fonction sans return renvoie...', '["0","None","false","vide"]', 'None', 'Par dÃ©faut, Python renvoie None.', 3, 45),
+                                                                    (157,'MCQ', 'Comment définir une fonction ?', '["function f()","def f():","fun f()","void f()"]', 'def f():', 'def définit une fonction.', 1, 45),
+                                                                    (158,'MCQ', 'Quel mot-clé renvoie une valeur ?', '["return","give","back","send"]', 'return', 'return renvoie une valeur.', 2, 45),
+                                                                    (159,'MCQ', 'Une fonction sans return renvoie...', '["0","None","false","vide"]', 'None', 'Par défaut, Python renvoie None.', 3, 45),
                                                                     (160,'MCQ', 'Quelle structure est une liste ?', '["()","[]","{}","<>"]', '[]', '[] est une liste.', 1, 46),
-                                                                    (161,'MCQ', 'MÃ©thode pour ajouter en fin de liste ?', '["add","push","append","insertLast"]', 'append', 'append ajoute un Ã©lÃ©ment.', 2, 46),
-                                                                    (162,'MCQ', 'Quel index correspond au premier Ã©lÃ©ment ?', '["1","0","-1","2"]', '0', 'Index commence Ã  0.', 3, 46),
+                                                                    (161,'MCQ', 'Méthode pour ajouter en fin de liste ?', '["add","push","append","insertLast"]', 'append', 'append ajoute un élément.', 2, 46),
+                                                                    (162,'MCQ', 'Quel index correspond au premier élément ?', '["1","0","-1","2"]', '0', 'Index commence à 0.', 3, 46),
                                                                     (163,'MCQ', 'Un tuple est...', '["Mutable","Immuable","Une classe","Un fichier"]', 'Immuable', 'Tuple = immuable.', 1, 47),
-                                                                    (164,'MCQ', 'Quelle syntaxe crÃ©e un tuple ?', '["[1,2]","(1,2)","{1,2}","<1,2>"]', '(1,2)', '( ) crÃ©e un tuple.', 2, 47),
-                                                                    (165,'MCQ', 'Pourquoi utiliser un tuple ?', '["Pour modifier","Pour donnÃ©es fixes","Pour compiler","Pour rÃ©seau"]', 'Pour donnÃ©es fixes', 'Tuple utile pour donnÃ©es immuables.', 3, 47),
+                                                                    (164,'MCQ', 'Quelle syntaxe crée un tuple ?', '["[1,2]","(1,2)","{1,2}","<1,2>"]', '(1,2)', '( ) crée un tuple.', 2, 47),
+                                                                    (165,'MCQ', 'Pourquoi utiliser un tuple ?', '["Pour modifier","Pour données fixes","Pour compiler","Pour réseau"]', 'Pour données fixes', 'Tuple utile pour données immuables.', 3, 47),
                                                                     (166,'MCQ', 'Un dictionnaire se note...', '["[]","()","{}","<>"]', '{}', '{} est un dict.', 1, 48),
-                                                                    (167,'MCQ', 'On accÃ¨de Ã  une valeur via...', '["index","clÃ©","pointeur","classe"]', 'clÃ©', 'dict utilise des clÃ©s.', 2, 48),
-                                                                    (168,'MCQ', 'MÃ©thode pour parcourir clÃ©s/valeurs ?', '["items()","pairs()","loop()","each()"]', 'items()', 'items() donne (clÃ©,valeur).', 3, 48),
-                                                                    (169,'MCQ', 'Un set...', '["Accepte doublons","Refuse doublons","Garde lâ€™ordre toujours","Est une liste"]', 'Refuse doublons', 'Set = pas de doublons.', 1, 49),
-                                                                    (170,'MCQ', 'Quelle syntaxe crÃ©e un set ?', '["{1,2}","[1,2]","(1,2)","<1,2>"]', '{1,2}', '{ } crÃ©e un set (si non dict).', 2, 49),
-                                                                    (171,'MCQ', 'OpÃ©ration pour ajouter dans un set ?', '["append","add","push","insert"]', 'add', 'add ajoute un Ã©lÃ©ment.', 3, 49),
-                                                                    (172,'MCQ', 'len(s) renvoie...', '["La taille","La valeur","Le type","La mÃ©moire"]', 'La taille', 'len renvoie la longueur.', 1, 50),
-                                                                    (173,'MCQ', 's.split() renvoie...', '["Un int","Une liste","Un dict","Un tuple"]', 'Une liste', 'split dÃ©coupe en liste.', 2, 50),
-                                                                    (174,'MCQ', 'Quel index donne le dernier caractÃ¨re ?', '["0","-1","1","2"]', '-1', 'Index nÃ©gatif depuis la fin.', 3, 50),
-                                                                    (175,'MCQ', 'Quelle fonction lit une entrÃ©e utilisateur ?', '["scan()","input()","read()","get()"]', 'input()', 'input lit au clavier.', 1, 51),
+                                                                    (167,'MCQ', 'On accède à une valeur via...', '["index","clé","pointeur","classe"]', 'clé', 'dict utilise des clés.', 2, 48),
+                                                                    (168,'MCQ', 'Méthode pour parcourir clés/valeurs ?', '["items()","pairs()","loop()","each()"]', 'items()', 'items() donne (clé,valeur).', 3, 48),
+                                                                    (169,'MCQ', 'Un set...', '["Accepte doublons","Refuse doublons","Garde l’ordre toujours","Est une liste"]', 'Refuse doublons', 'Set = pas de doublons.', 1, 49),
+                                                                    (170,'MCQ', 'Quelle syntaxe crée un set ?', '["{1,2}","[1,2]","(1,2)","<1,2>"]', '{1,2}', '{ } crée un set (si non dict).', 2, 49),
+                                                                    (171,'MCQ', 'Opération pour ajouter dans un set ?', '["append","add","push","insert"]', 'add', 'add ajoute un élément.', 3, 49),
+                                                                    (172,'MCQ', 'len(s) renvoie...', '["La taille","La valeur","Le type","La mémoire"]', 'La taille', 'len renvoie la longueur.', 1, 50),
+                                                                    (173,'MCQ', 's.split() renvoie...', '["Un int","Une liste","Un dict","Un tuple"]', 'Une liste', 'split découpe en liste.', 2, 50),
+                                                                    (174,'MCQ', 'Quel index donne le dernier caractère ?', '["0","-1","1","2"]', '-1', 'Index négatif depuis la fin.', 3, 50),
+                                                                    (175,'MCQ', 'Quelle fonction lit une entrée utilisateur ?', '["scan()","input()","read()","get()"]', 'input()', 'input lit au clavier.', 1, 51),
                                                                     (176,'MCQ', 'Pour convertir "5" en entier ?', '["int(''5'')","toInt(''5'')","parse(''5'')","integer(''5'')"]', 'int(''5'')', 'int() convertit en entier.', 2, 51),
-                                                                    (177,'MCQ', 'print() sert Ã ...', '["Afficher","Compiler","Allouer mÃ©moire","Importer"]', 'Afficher', 'print affiche.', 3, 51),
+                                                                    (177,'MCQ', 'print() sert à...', '["Afficher","Compiler","Allouer mémoire","Importer"]', 'Afficher', 'print affiche.', 3, 51),
                                                                     (178,'MCQ', 'Quelle fonction ouvre un fichier ?', '["open()","file()","fopen()","read()"]', 'open()', 'open ouvre un fichier.', 1, 52),
-                                                                    (179,'MCQ', 'with open(...) as f: sert Ã ...', '["GÃ©rer auto la fermeture","Boucler","CrÃ©er un dict","Compiler"]', 'GÃ©rer auto la fermeture', 'with ferme automatiquement.', 2, 52),
-                                                                    (180,'MCQ', 'MÃ©thode pour lire tout le contenu ?', '["f.read()","f.all()","f.get()","f.load()"]', 'f.read()', 'read lit tout.', 3, 52),
+                                                                    (179,'MCQ', 'with open(...) as f: sert à...', '["Gérer auto la fermeture","Boucler","Créer un dict","Compiler"]', 'Gérer auto la fermeture', 'with ferme automatiquement.', 2, 52),
+                                                                    (180,'MCQ', 'Méthode pour lire tout le contenu ?', '["f.read()","f.all()","f.get()","f.load()"]', 'f.read()', 'read lit tout.', 3, 52),
                                                                     (181,'MCQ', 'Quel bloc intercepte une exception ?', '["except","catch","error","trap"]', 'except', 'except intercepte.', 1, 53),
-                                                                    (182,'MCQ', 'finally sert Ã ...', '["Toujours exÃ©cuter un bloc","Boucler","CrÃ©er une fonction","Importer"]', 'Toujours exÃ©cuter un bloc', 'finally sâ€™exÃ©cute toujours.', 2, 53),
+                                                                    (182,'MCQ', 'finally sert à...', '["Toujours exécuter un bloc","Boucler","Créer une fonction","Importer"]', 'Toujours exécuter un bloc', 'finally s’exécute toujours.', 2, 53),
                                                                     (183,'MCQ', 'Exception pour conversion int("a") ?', '["ValueError","TypeError","IOError","KeyError"]', 'ValueError', 'Conversion invalide -> ValueError.', 3, 53),
                                                                     (184,'MCQ', 'Comment importer math ?', '["import math","include math","using math","require math"]', 'import math', 'import charge le module.', 1, 54),
-                                                                    (185,'MCQ', 'math.sqrt(9) renvoie...', '["3","9","81","0"]', '3', 'Racine carrÃ©e de 9 = 3.', 2, 54),
-                                                                    (186,'MCQ', 'random.choice([1,2]) fait...', '["Choisit un Ã©lÃ©ment","Trie la liste","Vide la liste","Additionne"]', 'Choisit un Ã©lÃ©ment', 'choice retourne un Ã©lÃ©ment alÃ©atoire.', 3, 54),
-                                                                    (187,'MCQ', 'Une comprÃ©hension de liste produit...', '["Une liste","Un dict","Un fichier","Un tuple"]', 'Une liste', 'List comprehension -> list.', 1, 55),
-                                                                    (188,'MCQ', 'Exemple correct de comprÃ©hension ?', '["[x*x for x in range(5)]","(x*x for x in range(5))","{x*x in range(5)}","x*x for x"]', '[x*x for x in range(5)]', 'Syntaxe valide.', 2, 55),
+                                                                    (185,'MCQ', 'math.sqrt(9) renvoie...', '["3","9","81","0"]', '3', 'Racine carrée de 9 = 3.', 2, 54),
+                                                                    (186,'MCQ', 'random.choice([1,2]) fait...', '["Choisit un élément","Trie la liste","Vide la liste","Additionne"]', 'Choisit un élément', 'choice retourne un élément aléatoire.', 3, 54),
+                                                                    (187,'MCQ', 'Une compréhension de liste produit...', '["Une liste","Un dict","Un fichier","Un tuple"]', 'Une liste', 'List comprehension -> list.', 1, 55),
+                                                                    (188,'MCQ', 'Exemple correct de compréhension ?', '["[x*x for x in range(5)]","(x*x for x in range(5))","{x*x in range(5)}","x*x for x"]', '[x*x for x in range(5)]', 'Syntaxe valide.', 2, 55),
                                                                     (189,'MCQ', 'Avantage principal ?', '["Plus lisible/compact","Plus lent","Impossible","Obligatoire"]', 'Plus lisible/compact', 'Souvent plus compact.', 3, 55),
-                                                                    (190,'MCQ', 'lambda sert Ã ...', '["CrÃ©er une petite fonction","CrÃ©er un module","CrÃ©er un fichier","CrÃ©er un set"]', 'CrÃ©er une petite fonction', 'lambda = fonction anonyme.', 1, 56),
-                                                                    (191,'MCQ', 'sorted(l, key=lambda x: x) utilise...', '["Une clÃ© de tri","Un import","Une exception","Un dict"]', 'Une clÃ© de tri', 'key dÃ©finit le critÃ¨re.', 2, 56),
-                                                                    (192,'MCQ', 'map() retourne...', '["Un itÃ©rateur","Toujours une liste","Toujours un dict","Un fichier"]', 'Un itÃ©rateur', 'map retourne un itÃ©rateur.', 3, 56),
-                                                                    (193,'MCQ', 'class User: dÃ©finit...', '["Une classe","Une fonction","Un fichier","Une boucle"]', 'Une classe', 'class dÃ©finit une classe.', 1, 57),
-                                                                    (194,'MCQ', '__init__ est...', '["Le constructeur","Une boucle","Un module","Un fichier"]', 'Le constructeur', '__init__ initialise lâ€™objet.', 2, 57),
-                                                                    (195,'MCQ', 'self reprÃ©sente...', '["Lâ€™objet courant","Le parent","Le module","Le fichier"]', 'Lâ€™objet courant', 'self = instance actuelle.', 3, 57),
-                                                                    (196,'MCQ', 'pip sert Ã ...', '["Installer des packages","Compiler Python","CrÃ©er une DB","GÃ©rer les boucles"]', 'Installer des packages', 'pip installe des bibliothÃ¨ques.', 1, 58),
+                                                                    (190,'MCQ', 'lambda sert à...', '["Créer une petite fonction","Créer un module","Créer un fichier","Créer un set"]', 'Créer une petite fonction', 'lambda = fonction anonyme.', 1, 56),
+                                                                    (191,'MCQ', 'sorted(l, key=lambda x: x) utilise...', '["Une clé de tri","Un import","Une exception","Un dict"]', 'Une clé de tri', 'key définit le critère.', 2, 56),
+                                                                    (192,'MCQ', 'map() retourne...', '["Un itérateur","Toujours une liste","Toujours un dict","Un fichier"]', 'Un itérateur', 'map retourne un itérateur.', 3, 56),
+                                                                    (193,'MCQ', 'class User: définit...', '["Une classe","Une fonction","Un fichier","Une boucle"]', 'Une classe', 'class définit une classe.', 1, 57),
+                                                                    (194,'MCQ', '__init__ est...', '["Le constructeur","Une boucle","Un module","Un fichier"]', 'Le constructeur', '__init__ initialise l’objet.', 2, 57),
+                                                                    (195,'MCQ', 'self représente...', '["L’objet courant","Le parent","Le module","Le fichier"]', 'L’objet courant', 'self = instance actuelle.', 3, 57),
+                                                                    (196,'MCQ', 'pip sert à...', '["Installer des packages","Compiler Python","Créer une DB","Gérer les boucles"]', 'Installer des packages', 'pip installe des bibliothèques.', 1, 58),
                                                                     (197,'MCQ', 'Commande pour installer requests ?', '["pip install requests","pip add requests","install requests","python install requests"]', 'pip install requests', 'Commande standard pip.', 2, 58),
-                                                                    (198,'MCQ', 'Un package est...', '["Une bibliothÃ¨que","Une variable","Un fichier texte","Un pointeur"]', 'Une bibliothÃ¨que', 'Package = librairie.', 3, 58),
-                                                                    (199,'MCQ', 'Compter des mots nÃ©cessite souvent...', '["split()","malloc()","printf()","extends"]', 'split()', 'split dÃ©coupe les mots.', 1, 59),
-                                                                    (200,'MCQ', 'Structure idÃ©ale pour compter occurrences ?', '["dict","tuple","set","float"]', 'dict', 'dict = clÃ© -> compteur.', 2, 59),
+                                                                    (198,'MCQ', 'Un package est...', '["Une bibliothèque","Une variable","Un fichier texte","Un pointeur"]', 'Une bibliothèque', 'Package = librairie.', 3, 58),
+                                                                    (199,'MCQ', 'Compter des mots nécessite souvent...', '["split()","malloc()","printf()","extends"]', 'split()', 'split découpe les mots.', 1, 59),
+                                                                    (200,'MCQ', 'Structure idéale pour compter occurrences ?', '["dict","tuple","set","float"]', 'dict', 'dict = clé -> compteur.', 2, 59),
                                                                     (201,'MCQ', 'Lire un fichier texte en Python ?', '["with open(...) as f","fopen()","scanf()","System.in"]', 'with open(...) as f', 'with open est idiomatique.', 3, 59),
-                                                                    (202,'MCQ', 'Quel symbole commence un commentaire ?', '["//","#","/*","--"]', '#', '# dÃ©marre un commentaire.', 1, 60),
+                                                                    (202,'MCQ', 'Quel symbole commence un commentaire ?', '["//","#","/*","--"]', '#', '# démarre un commentaire.', 1, 60),
                                                                     (203,'MCQ', 'Quelle structure est une liste ?', '["()","[]","{}","<>"]', '[]', '[] est une liste.', 2, 60),
                                                                     (204,'MCQ', 'Quelle structure est un dictionnaire ?', '["()","[]","{}","<>"]', '{}', '{} est un dict.', 3, 60),
                                                                     (205,'MCQ', 'Quelle fonction donne la longueur ?', '["size()","len()","length()","count()"]', 'len()', 'len() renvoie la taille.', 4, 60),
-                                                                    (206,'MCQ', 'Comment dÃ©finir une fonction ?', '["function f()","def f():","fun f()","void f()"]', 'def f():', 'def dÃ©finit une fonction.', 5, 60),
+                                                                    (206,'MCQ', 'Comment définir une fonction ?', '["function f()","def f():","fun f()","void f()"]', 'def f():', 'def définit une fonction.', 5, 60),
                                                                     (207,'MCQ', 'elif signifie...', '["else if","end if","error if","equal if"]', 'else if', 'elif = else if.', 6, 60),
                                                                     (208,'MCQ', 'range(3) produit...', '["1..3","0..2","0..3","2..3"]', '0..2', 'range(3)=0,1,2.', 7, 60),
-                                                                    (209,'MCQ', 'Quel opÃ©rateur signifie ET logique ?', '["&&","and","AND","&"]', 'and', 'and est lâ€™opÃ©rateur logique.', 8, 60),
-                                                                    (210,'MCQ', 'Quel opÃ©rateur signifie OU logique ?', '["||","or","OR","|"]', 'or', 'or est lâ€™opÃ©rateur logique.', 9, 60),
+                                                                    (209,'MCQ', 'Quel opérateur signifie ET logique ?', '["&&","and","AND","&"]', 'and', 'and est l’opérateur logique.', 8, 60),
+                                                                    (210,'MCQ', 'Quel opérateur signifie OU logique ?', '["||","or","OR","|"]', 'or', 'or est l’opérateur logique.', 9, 60),
                                                                     (211,'MCQ', '2**3 vaut...', '["6","8","9","5"]', '8', '** calcule la puissance.', 10, 60),
-                                                                    (212,'MCQ', 'Quel mot-clÃ© renvoie une valeur ?', '["return","give","back","send"]', 'return', 'return renvoie une valeur.', 11, 60),
-                                                                    (213,'MCQ', 'try/except sert Ã ...', '["GÃ©rer les erreurs","CrÃ©er un module","CrÃ©er une liste","Lire une DB"]', 'GÃ©rer les erreurs', 'try/except gÃ¨re exceptions.', 12, 60),
-                                                                    (214,'MCQ', 'with open(...) as f: sert Ã ...', '["Fermer auto le fichier","Boucler","CrÃ©er une classe","Installer pip"]', 'Fermer auto le fichier', 'with gÃ¨re la fermeture.', 13, 60),
+                                                                    (212,'MCQ', 'Quel mot-clé renvoie une valeur ?', '["return","give","back","send"]', 'return', 'return renvoie une valeur.', 11, 60),
+                                                                    (213,'MCQ', 'try/except sert à...', '["Gérer les erreurs","Créer un module","Créer une liste","Lire une DB"]', 'Gérer les erreurs', 'try/except gère exceptions.', 12, 60),
+                                                                    (214,'MCQ', 'with open(...) as f: sert à...', '["Fermer auto le fichier","Boucler","Créer une classe","Installer pip"]', 'Fermer auto le fichier', 'with gère la fermeture.', 13, 60),
                                                                     (215,'MCQ', 'Une liste accepte...', '["Des doublons","Jamais de doublons","Seulement int","Seulement str"]', 'Des doublons', 'Les listes acceptent doublons.', 14, 60),
-                                                                    (216,'MCQ', 'Un set en Python...', '["Refuse les doublons","Accepte les doublons","Garde toujours lâ€™ordre","Est un dict"]', 'Refuse les doublons', 'Un set ne contient pas de doublons.', 15, 60),
+                                                                    (216,'MCQ', 'Un set en Python...', '["Refuse les doublons","Accepte les doublons","Garde toujours l’ordre","Est un dict"]', 'Refuse les doublons', 'Un set ne contient pas de doublons.', 15, 60),
                                                                     (649, 'MCQ', 'Quel type C++ est adapte pour un entier ?', '["int","double","bool","char"]', 'int', 'int est le type entier courant.', 1, 61),
                                                                     (650, 'MCQ', 'Quel type stocke vrai ou faux ?', '["bool","int","string","float"]', 'bool', 'bool represente une valeur booleenne.', 2, 61),
                                                                     (651, 'MCQ', 'Quel mot-cle permet deduction de type ?', '["auto","typedef","using","const"]', 'auto', 'auto laisse le compilateur deduire le type.', 3, 61),
@@ -4898,7 +4898,7 @@ INSERT INTO exercises (id, type, question, choices_json, answer, explanation, or
                                                                     (915, 'MCQ', 'Quel element contient le contenu visible ?', '["<body>","<head>","<meta>","<title>"]', '<body>', 'body contient le contenu visible.', 9, 140),
                                                                     (916, 'MCQ', 'Quel element decrit une zone thematique ?', '["<section>","<span>","<b>","<i>"]', '<section>', 'section est une zone thematique.', 10, 140),
                                                                     (917, 'MCQ', 'Selecteur pour une classe ?', '[".btn","#btn","btn","*"]', '.btn', 'Le point cible une classe.', 1, 141),
-                                                                    (918, 'MCQ', 'Selecteur pour un id ?', '["#main",".main","main","*"]', '#main', 'Le diÃ¨se cible un id.', 2, 141),
+                                                                    (918, 'MCQ', 'Selecteur pour un id ?', '["#main",".main","main","*"]', '#main', 'Le dièse cible un id.', 2, 141),
                                                                     (919, 'MCQ', 'Selecteur de groupe valide ?', '["h1, h2","h1 h2","h1 > h2","h1 + h2"]', 'h1, h2', 'La virgule groupe plusieurs elements.', 3, 141),
                                                                     (920, 'MCQ', 'Ordre du box model du centre vers l exterieur ?', '["content, padding, border, margin","padding, content, margin, border","content, border, padding, margin","margin, border, padding, content"]', 'content, padding, border, margin', 'Le box model part du contenu vers la marge.', 1, 142),
                                                                     (921, 'MCQ', 'Quelle propriete inclut border dans la taille ?', '["box-sizing: border-box","box-sizing: content-box","display: block","overflow: hidden"]', 'box-sizing: border-box', 'border-box inclut padding et border.', 2, 142),
@@ -5061,7 +5061,7 @@ INSERT INTO exercises (id, type, question, choices_json, answer, explanation, or
                                                                     (1078, 'MCQ', 'Quelle methode retourne le premier element pour un selecteur CSS ?', '["querySelector","getElementById","querySelectorAll","find"]', 'querySelector', 'querySelector retourne le premier match.', 13, 180),
                                                                     (1079, 'MCQ', 'Quelle boucle parcourt les valeurs d un tableau ?', '["for...of","for...in","while","switch"]', 'for...of', 'for...of parcourt les valeurs du tableau.', 14, 180),
                                                                     (1080, 'MCQ', 'Quel mot cle interrompt une boucle ?', '["break","continue","return","exit"]', 'break', 'break arrete la boucle en cours.', 15, 180)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET type = EXCLUDED.type, question = EXCLUDED.question, choices_json = EXCLUDED.choices_json, answer = EXCLUDED.answer, explanation = EXCLUDED.explanation, order_index = EXCLUDED.order_index, lesson_id = EXCLUDED.lesson_id;
 
 
 -- Dev admin account (password: Admin@123)

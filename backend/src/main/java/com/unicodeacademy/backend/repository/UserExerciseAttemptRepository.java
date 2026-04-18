@@ -2,6 +2,7 @@ package com.unicodeacademy.backend.repository;
 
 import com.unicodeacademy.backend.model.UserExerciseAttempt;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -36,6 +37,27 @@ public interface UserExerciseAttemptRepository extends JpaRepository<UserExercis
     long countDistinctAttemptedExercisesByUserIdAndLessonId(@Param("userId") Long userId,
                                                              @Param("lessonId") Long lessonId);
 
+    @Query("""
+            select count(distinct a.exercise.id)
+            from UserExerciseAttempt a
+            where a.user.id = :userId
+              and a.exercise.lesson.id = :lessonId
+              and a.correct = true
+            """)
+    long countDistinctCorrectExercisesByUserIdAndLessonId(@Param("userId") Long userId,
+                                                          @Param("lessonId") Long lessonId);
+
     void deleteByUserId(Long userId);
+
+    @Modifying
+    void deleteByExercise_Id(Long exerciseId);
+
+    @Modifying
+    void deleteByExercise_Lesson_Id(Long lessonId);
+
+    @Modifying
+    void deleteByExercise_Lesson_Course_Id(Long courseId);
+
+    long countByUserIdAndCorrectTrue(Long userId);
 
 }

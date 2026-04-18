@@ -127,14 +127,16 @@ function ProtectedFullscreen({ children }: { children: ReactNode }) {
 }
 
 function ProtectedAdmin({ children }: { children: ReactNode }) {
-  if (!getToken()) {
-    return <Navigate to="/login" replace />;
-  }
-
+  const token = getToken();
   const currentUserQuery = useQuery({
     queryKey: queryKeys.currentUser,
     queryFn: getCurrentUser,
+    enabled: Boolean(token),
   });
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (currentUserQuery.isLoading) {
     return (

@@ -45,6 +45,9 @@ type WebPlaygroundState = {
 };
 
 type RunFeedback = {
+  success: boolean;
+  timedOut: boolean;
+  exitCode: number | null;
   stdout: string;
   stderr: string;
   compileOutput: string;
@@ -83,11 +86,13 @@ export default function LeconPage() {
   const [previewRatio, setPreviewRatio] = useState(35);
   const [playgroundByLesson, setPlaygroundByLesson] = useState<Record<number, WebPlaygroundState>>({});
   const [rawCodeByLesson, setRawCodeByLesson] = useState<Record<number, string>>({});
+  const [stdinByLesson, setStdinByLesson] = useState<Record<number, string>>({});
   const [editorCode, setEditorCode] = useState("");
   const [editorLang, setEditorLang] = useState<EditorSnippetLanguage>("python");
   const [isRunning, setIsRunning] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  const [practiceWorkspaceResetSignal, setPracticeWorkspaceResetSignal] = useState(0);
   const resizeRef = useRef<{ startY: number; startRatio: number } | null>(null);
   const handleRunShortcut = useEffectEvent(() => {
     void handleRunCode();
@@ -408,6 +413,9 @@ export default function LeconPage() {
     isWebLesson,
     consoleText,
   });
+  const stdinValue =
+    currentLesson && !isWebLesson ? stdinByLesson[currentLesson.id] ?? "" : "";
+  const runSummary = getRunSummary(lastRunFeedback);
   const exercisePath = buildUnitExercisesPath(numericCourseId, unit.id);
   const lessonExpectedNote = getLessonExpectedNote(practiceChallenge);
 
@@ -468,11 +476,15 @@ export default function LeconPage() {
       const result = await runCode({
         language: canonicalLanguage,
         code,
+        stdin: stdinByLesson[currentLesson.id] || undefined,
       });
 
       setConsoleText(formatConsoleOutput(result.stdout, result.stderr, result.compileOutput));
       setConsoleOutput(result.stdout ?? "");
       setLastRunFeedback({
+        success: result.success,
+        timedOut: result.timedOut,
+        exitCode: result.exitCode ?? null,
         stdout: result.stdout ?? "",
         stderr: result.stderr ?? "",
         compileOutput: result.compileOutput ?? "",
@@ -481,9 +493,12 @@ export default function LeconPage() {
     } catch (error) {
       const message = getErrorMessage(error, "Execution impossible.");
       toast.error(message);
-      setConsoleText(`> ${message}`);
+      setConsoleText(`ERREUR\n${message}`);
       setConsoleOutput("");
       setLastRunFeedback({
+        success: false,
+        timedOut: false,
+        exitCode: null,
         stdout: "",
         stderr: message,
         compileOutput: "",
@@ -556,6 +571,10 @@ export default function LeconPage() {
         ...current,
         [currentLesson.id]: starterCode,
       }));
+      setStdinByLesson((current) => ({
+        ...current,
+        [currentLesson.id]: "",
+      }));
       setEditorLang(resolveEditorLanguage(false, activeTab, canonicalLanguage));
       setEditorCode(starterCode);
       setConsoleText("");
@@ -565,6 +584,9 @@ export default function LeconPage() {
     setConsoleOutput("");
     setLastRunFeedback(null);
     setHasRunCode(false);
+    if (phase === "pratique") {
+      setPracticeWorkspaceResetSignal((current) => current + 1);
+    }
   }
 
   function enterPracticePhase() {
@@ -625,6 +647,7 @@ export default function LeconPage() {
     setLastRunFeedback(null);
     setPreviewDoc("");
     setHasRunCode(false);
+    setPracticeWorkspaceResetSignal((current) => current + 1);
   }
 
   async function markCurrentLessonComplete() {
@@ -779,6 +802,7 @@ export default function LeconPage() {
               key={`${numericCourseId}-${currentLesson.id}`}
               lessonId={currentLesson.id}
               courseId={numericCourseId}
+              workspaceResetSignal={practiceWorkspaceResetSignal}
               consoleOutput={consoleOutput}
               challenge={practiceChallenge}
               runAssessment={practiceRunAssessment}
@@ -797,23 +821,36 @@ export default function LeconPage() {
           style={{ minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}
         >
           <div className="workspace-toolbar">
-            <div className="editor-tabs">
-              {isWebLesson ? (
-                (["html", "css", "js"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    className={`editor-tab${activeTab === tab ? " active" : ""}`}
-                    onClick={() => setActiveTab(tab)}
-                  >
-                    {tab.toUpperCase()}
+            <div style={{ display: "grid", gap: 6 }}>
+              <div className="editor-tabs">
+                {isWebLesson ? (
+                  (["html", "css", "js"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={`editor-tab${activeTab === tab ? " active" : ""}`}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {tab.toUpperCase()}
+                    </button>
+                  ))
+                ) : (
+                  <button type="button" className="editor-tab active">
+                    {displayLanguageLabel(canonicalLanguage)}
                   </button>
-                ))
-              ) : (
-                <button type="button" className="editor-tab active">
-                  {displayLanguageLabel(canonicalLanguage)}
-                </button>
-              )}
+                )}
+              </div>
+              <span
+                style={{
+                  color: "var(--text-3)",
+                  fontFamily: "var(--mono)",
+                  fontSize: 11,
+                }}
+              >
+                {isWebLesson
+                  ? "HTML/CSS/JS : apercu navigateur local"
+                  : "Execution locale de demo : Python, Java, C, C++, C#, SQL"}
+              </span>
             </div>
 
             <div className="workspace-toolbar-actions">
@@ -875,20 +912,65 @@ export default function LeconPage() {
                   <span className="preview-subcopy">
                     {isWebLesson
                       ? "Zone de rendu visuel du defi"
-                      : "Sortie de ton programme apres execution"}
+                      : "Sortie locale, erreurs et resultat d'execution"}
                   </span>
                 </div>
-                {practiceRunAssessment ? (
-                  <span className={`preview-feedback-pill ${practiceRunAssessment.kind}`}>
-                    {getPracticeRunAssessmentLabel(practiceRunAssessment)}
-                  </span>
-                ) : null}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  {runSummary ? (
+                    <span className={`preview-feedback-pill ${runSummary.kind}`}>
+                      {runSummary.label}
+                    </span>
+                  ) : null}
+                  {practiceRunAssessment ? (
+                    <span className={`preview-feedback-pill ${practiceRunAssessment.kind}`}>
+                      {getPracticeRunAssessmentLabel(practiceRunAssessment)}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               {practiceRunAssessment ? (
                 <div className={`practice-run-feedback practice-run-feedback-${practiceRunAssessment.kind}`}>
                   <strong>{practiceRunAssessment.title}</strong>
                   <span>{practiceRunAssessment.message}</span>
+                </div>
+              ) : null}
+
+              {!isWebLesson ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 8,
+                    marginBottom: 12,
+                  }}
+                >
+                  <label
+                    htmlFor="lesson-stdin"
+                    style={{
+                      color: "var(--text-2)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Entree standard optionnelle
+                  </label>
+                  <textarea
+                    id="lesson-stdin"
+                    className="field"
+                    rows={3}
+                    value={stdinValue}
+                    placeholder="Texte lu par le programme via stdin"
+                    onChange={(event) => {
+                      if (!currentLesson) {
+                        return;
+                      }
+
+                      setStdinByLesson((current) => ({
+                        ...current,
+                        [currentLesson.id]: event.target.value,
+                      }));
+                    }}
+                  />
                 </div>
               ) : null}
 
@@ -1139,16 +1221,13 @@ function displayLanguageLabel(language: string) {
 }
 
 function formatConsoleOutput(stdout: string, stderr: string, compileOutput: string) {
-  const lines = [compileOutput, stdout, stderr]
-    .filter((part) => part.trim().length > 0)
-    .flatMap((part) => part.trim().split(/\r?\n/))
-    .map((line) => `> ${line}`);
+  const sections = [
+    buildConsoleSection("COMPILATION", compileOutput),
+    buildConsoleSection("SORTIE", stdout),
+    buildConsoleSection("ERREURS", stderr),
+  ].filter(Boolean);
 
-  if (lines.length === 0) {
-    return "";
-  }
-
-  return lines.join("\n");
+  return sections.join("\n\n");
 }
 
 function formatAiPracticeCodeSnapshot(playground: WebPlaygroundState) {
@@ -2262,7 +2341,9 @@ function getConsoleDisplayText({
   }
 
   if (hasRunCode) {
-    return consoleText || (isWebLesson ? "Apercu pret." : "Le programme ne produit pas encore de sortie.");
+    return consoleText || (isWebLesson
+      ? "Apercu pret."
+      : "Execution terminee. Aucune sortie standard n'a ete produite.");
   }
 
   if (isWebLesson) {
@@ -2272,8 +2353,8 @@ function getConsoleDisplayText({
   }
 
   return phase === "pratique"
-    ? "Execute ton code pour verifier le resultat du defi ici."
-    : "Execute ton code pour voir le resultat ici.";
+    ? "Execute ton code pour verifier le resultat du defi ici. L'execution reste locale et limitee a un environnement de demonstration."
+    : "Execute ton code pour voir le resultat ici. Python, Java, C, C++, C#, SQL et l'apercu web sont disponibles selon la lecon.";
 }
 
 function formatRunError(runFeedback: RunFeedback | null) {
@@ -2285,6 +2366,46 @@ function formatRunError(runFeedback: RunFeedback | null) {
     .map((part) => sanitizeValue(part))
     .filter(Boolean)
     .join("\n");
+}
+
+function buildConsoleSection(title: string, content: string) {
+  const normalized = content.trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return `${title}\n${normalized}`;
+}
+
+function getRunSummary(runFeedback: RunFeedback | null) {
+  if (!runFeedback) {
+    return null;
+  }
+
+  if (runFeedback.timedOut) {
+    return {
+      kind: "close",
+      label: "Timeout",
+    } as const;
+  }
+
+  if (runFeedback.success) {
+    return {
+      kind: "success",
+      label:
+        runFeedback.exitCode !== null && runFeedback.exitCode !== 0
+          ? `Code ${runFeedback.exitCode}`
+          : "Execution OK",
+    } as const;
+  }
+
+  return {
+    kind: "error",
+    label:
+      runFeedback.exitCode !== null && runFeedback.exitCode > 0
+        ? `Code ${runFeedback.exitCode}`
+        : "A corriger",
+  } as const;
 }
 
 function getLessonExpectedNote(challenge: PracticeChallengeView | null) {

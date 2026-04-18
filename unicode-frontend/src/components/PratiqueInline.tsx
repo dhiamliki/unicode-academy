@@ -29,6 +29,8 @@ type ValidationStatus = "idle" | "running" | "ready" | "success" | "failure";
 type PratiqueInlineProps = {
   lessonId: number;
   courseId: number;
+  /** Increments when the parent resets the editor so local validation UI returns to a clean state. */
+  workspaceResetSignal?: number;
   consoleOutput: string;
   challenge: PracticeChallengeView;
   runAssessment: PracticeRunAssessment | null;
@@ -43,6 +45,7 @@ type PratiqueInlineProps = {
 export default function PratiqueInline({
   lessonId,
   courseId,
+  workspaceResetSignal = 0,
   consoleOutput,
   challenge,
   runAssessment,
@@ -70,6 +73,7 @@ export default function PratiqueInline({
     };
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (timeoutRef.current !== null) {
       window.clearTimeout(timeoutRef.current);
@@ -89,6 +93,7 @@ export default function PratiqueInline({
     challenge.objective,
     challenge.starterCode,
     lessonId,
+    workspaceResetSignal,
   ]);
 
   useEffect(() => {
@@ -110,6 +115,7 @@ export default function PratiqueInline({
       setStatus("ready");
     }
   }, [hasRunCode, isRunning, showContinue, status]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const steps = useMemo(
     () => buildPracticeSteps(challenge.validationMode === "preview" || isWebLesson),

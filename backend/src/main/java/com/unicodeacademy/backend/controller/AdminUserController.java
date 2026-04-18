@@ -3,6 +3,8 @@ package com.unicodeacademy.backend.controller;
 import com.unicodeacademy.backend.dto.AdminUserResponse;
 import com.unicodeacademy.backend.dto.UpdateUserRoleRequest;
 import com.unicodeacademy.backend.model.User;
+import com.unicodeacademy.backend.model.UserCourseProgress;
+import com.unicodeacademy.backend.model.UserLessonProgress;
 import com.unicodeacademy.backend.repository.UserCourseProgressRepository;
 import com.unicodeacademy.backend.repository.UserExerciseAttemptRepository;
 import com.unicodeacademy.backend.repository.UserLessonProgressRepository;
@@ -96,12 +98,22 @@ public class AdminUserController {
 
     private AdminUserResponse toResponse(User user) {
         User.Role role = user.getRole() != null ? user.getRole() : User.Role.USER;
+
+        long completedCourses = userCourseProgressRepository.countByUserIdAndStatus(user.getId(), UserCourseProgress.Status.COMPLETED);
+        long completedLessons = userLessonProgressRepository.countByUserIdAndStatus(user.getId(), UserLessonProgress.Status.COMPLETED);
+        long correctExercises = userExerciseAttemptRepository.countByUserIdAndCorrectTrue(user.getId());
+        long totalPoints = (completedLessons * 10L) + (completedCourses * 30L);
+
         return new AdminUserResponse(
                 user.getId(),
                 TextEncodingFixer.fix(user.getUsername()),
                 user.getEmail(),
                 role.name(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                completedCourses,
+                completedLessons,
+                correctExercises,
+                totalPoints
         );
     }
 

@@ -9,4 +9,5 @@ public interface ProgrammingLanguageRepository extends JpaRepository<Programming
     Optional<ProgrammingLanguage> findByCode(String code);
     Optional<ProgrammingLanguage> findByCodeIgnoreCase(String code);
     boolean existsByCode(String code);
+    boolean existsByCodeIgnoreCase(String code);
 }

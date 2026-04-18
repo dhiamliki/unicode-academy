@@ -2,6 +2,7 @@ package com.unicodeacademy.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unicodeacademy.backend.model.Exercise;
+import com.unicodeacademy.backend.model.Lesson;
 import com.unicodeacademy.backend.model.User;
 import com.unicodeacademy.backend.model.UserExerciseAttempt;
 import com.unicodeacademy.backend.repository.ExerciseRepository;
@@ -10,6 +11,7 @@ import com.unicodeacademy.backend.repository.UserRepository;
 import com.unicodeacademy.backend.security.AuthRateLimitFilter;
 import com.unicodeacademy.backend.security.JwtAuthFilter;
 import com.unicodeacademy.backend.service.AiService;
+import com.unicodeacademy.backend.service.LessonProgressService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,6 +61,9 @@ class ExerciseAttemptControllerWebMvcTest {
     private UserExerciseAttemptRepository attemptRepository;
 
     @MockBean
+    private LessonProgressService lessonProgressService;
+
+    @MockBean
     private AiService aiService;
 
     @MockBean
@@ -71,6 +77,9 @@ class ExerciseAttemptControllerWebMvcTest {
         User user = createUser();
         Exercise exercise = createMcqExercise(5L, "[\"Choice A\",\"Choice B\",\"Choice C\"]", "Choice B");
         exercise.setExplanation("Because Choice B is correct");
+        Lesson lesson = new Lesson();
+        lesson.setId(20L);
+        exercise.setLesson(lesson);
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(exerciseRepository.findById(5L)).thenReturn(Optional.of(exercise));
@@ -96,6 +105,7 @@ class ExerciseAttemptControllerWebMvcTest {
         assertEquals("Choice B", savedAttempt.getSubmittedAnswer());
         assertTrue(savedAttempt.isCorrect());
         assertNotNull(savedAttempt.getAttemptedAt());
+        verify(lessonProgressService).maybeCompleteLessonAfterCorrectExercise(20L);
     }
 
     @Test
@@ -124,6 +134,7 @@ class ExerciseAttemptControllerWebMvcTest {
         verify(attemptRepository).save(captor.capture());
         assertFalse(captor.getValue().isCorrect());
         assertEquals("print(1)", captor.getValue().getSubmittedAnswer());
+        verify(lessonProgressService, never()).maybeCompleteLessonAfterCorrectExercise(anyLong());
     }
 
     @Test

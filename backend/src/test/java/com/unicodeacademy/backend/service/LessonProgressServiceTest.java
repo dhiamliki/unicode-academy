@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,13 +46,16 @@ class LessonProgressServiceTest {
     private LessonRepository lessonRepository;
 
     @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
+
+    @Mock
     private ExerciseRepository exerciseRepository;
 
     @Mock
     private UserExerciseAttemptRepository userExerciseAttemptRepository;
 
     @Mock
-    private UserLessonProgressRepository userLessonProgressRepository;
+    private ProgressService progressService;
 
     private LessonProgressService lessonProgressService;
 
@@ -62,7 +66,8 @@ class LessonProgressServiceTest {
                 lessonRepository,
                 exerciseRepository,
                 userExerciseAttemptRepository,
-                userLessonProgressRepository
+                userLessonProgressRepository,
+                progressService
         );
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(EMAIL, "ignored")
@@ -75,15 +80,15 @@ class LessonProgressServiceTest {
     }
 
     @Test
-    void markLessonCompletedForLessonNotYetStartedCreatesCompletedProgress() {
+    void markLessonCompletedCreatesCompletedProgressAndSyncsCourseProgress() {
         User user = createUser(1L, EMAIL);
         Lesson lesson = createLesson(10L, 1);
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(exerciseRepository.countByLessonId(10L)).thenReturn(0L);
         when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.empty());
-        when(userLessonProgressRepository.save(any(UserLessonProgress.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         UserLessonProgress result = lessonProgressService.markLessonCompleted(10L);
 
@@ -96,10 +101,11 @@ class LessonProgressServiceTest {
         assertEquals(lesson, savedProgress.getLesson());
         assertEquals(UserLessonProgress.Status.COMPLETED, savedProgress.getStatus());
         assertNotNull(savedProgress.getCompletedAt());
+        verify(progressService).syncCourseProgressForUser(user, lesson.getCourse());
     }
 
     @Test
-    void markLessonCompletedForAlreadyCompletedLessonReturnsExistingProgressWithoutDuplicate() {
+    void markLessonCompletedKeepsExistingCompletionTimestamp() {
         User user = createUser(1L, EMAIL);
         Lesson lesson = createLesson(10L, 1);
         Instant completedAt = Instant.parse("2026-01-01T10:15:30Z");
@@ -113,8 +119,8 @@ class LessonProgressServiceTest {
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(exerciseRepository.countByLessonId(10L)).thenReturn(0L);
-        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.of(existingProgress));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L))
+                .thenReturn(Optional.of(existingProgress));
         when(userLessonProgressRepository.save(existingProgress)).thenReturn(existingProgress);
 
         UserLessonProgress result = lessonProgressService.markLessonCompleted(10L);
@@ -122,7 +128,7 @@ class LessonProgressServiceTest {
         assertSame(existingProgress, result);
         assertEquals(UserLessonProgress.Status.COMPLETED, result.getStatus());
         assertEquals(completedAt, result.getCompletedAt());
-        verify(userLessonProgressRepository).save(existingProgress);
+        verify(progressService).syncCourseProgressForUser(user, lesson.getCourse());
     }
 
     @Test
@@ -140,7 +146,7 @@ class LessonProgressServiceTest {
     }
 
     @Test
-    void toggleLessonCompletionForCompletedLessonMarksItInProgress() {
+    void toggleLessonCompletionForCompletedLessonMarksItInProgressAndSyncsCourseProgress() {
         User user = createUser(1L, EMAIL);
         Lesson lesson = createLesson(10L, 1);
         Instant completedAt = Instant.parse("2026-01-01T10:15:30Z");
@@ -153,7 +159,8 @@ class LessonProgressServiceTest {
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.of(existingProgress));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L))
+                .thenReturn(Optional.of(existingProgress));
         when(userLessonProgressRepository.save(existingProgress)).thenReturn(existingProgress);
 
         UserLessonProgress result = lessonProgressService.toggleLessonCompletion(10L);
@@ -161,11 +168,11 @@ class LessonProgressServiceTest {
         assertSame(existingProgress, result);
         assertEquals(UserLessonProgress.Status.IN_PROGRESS, result.getStatus());
         assertNull(result.getCompletedAt());
-        verify(userLessonProgressRepository).save(existingProgress);
+        verify(progressService).syncCourseProgressForUser(user, lesson.getCourse());
     }
 
     @Test
-    void toggleLessonCompletionForIncompleteLessonMarksItCompletedWhenRequirementsPass() {
+    void toggleLessonCompletionForIncompleteLessonMarksItCompletedAndSyncsCourseProgress() {
         User user = createUser(1L, EMAIL);
         Lesson lesson = createLesson(10L, 1);
 
@@ -176,8 +183,8 @@ class LessonProgressServiceTest {
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.of(existingProgress));
-        when(exerciseRepository.countByLessonId(10L)).thenReturn(0L);
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L))
+                .thenReturn(Optional.of(existingProgress));
         when(userLessonProgressRepository.save(existingProgress)).thenReturn(existingProgress);
 
         UserLessonProgress result = lessonProgressService.toggleLessonCompletion(10L);
@@ -185,14 +192,16 @@ class LessonProgressServiceTest {
         assertSame(existingProgress, result);
         assertEquals(UserLessonProgress.Status.COMPLETED, result.getStatus());
         assertNotNull(result.getCompletedAt());
-        verify(userLessonProgressRepository).save(existingProgress);
+        verify(progressService).syncCourseProgressForUser(user, lesson.getCourse());
     }
 
     @Test
-    void markLessonIncompleteResetsCompletedProgress() {
+    void markLessonIncompleteResetsCompletedProgressAndSyncsCourseProgress() {
         User user = createUser(1L, EMAIL);
+        Lesson lesson = createLesson(10L, 1);
 
         UserLessonProgress progress = new UserLessonProgress();
+        progress.setLesson(lesson);
         progress.setStatus(UserLessonProgress.Status.COMPLETED);
         progress.setCompletedAt(Instant.parse("2026-01-01T10:15:30Z"));
 
@@ -205,41 +214,68 @@ class LessonProgressServiceTest {
         assertEquals(UserLessonProgress.Status.IN_PROGRESS, progress.getStatus());
         assertNull(progress.getCompletedAt());
         verify(userLessonProgressRepository).save(progress);
+        verify(progressService).syncCourseProgressForUser(user, lesson.getCourse());
     }
 
     @Test
-    void markLessonCompletedThrowsWhenPreviousLessonIsNotCompleted() {
+    void markLessonIncompleteThrowsWhenProgressDoesNotExist() {
         User user = createUser(1L, EMAIL);
-        Lesson lesson = createLesson(10L, 2);
-        Lesson previousLesson = createLesson(9L, 1);
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(lessonRepository.findByCourseIdAndOrderIndex(100L, 1)).thenReturn(Optional.of(previousLesson));
-        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 9L)).thenReturn(Optional.empty());
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.empty());
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> lessonProgressService.markLessonCompleted(10L));
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> lessonProgressService.markLessonIncomplete(10L));
 
-        assertEquals("Vous devez d'abord terminer la lecon precedente", exception.getMessage());
-        verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
+        assertEquals("Progression introuvable", exception.getMessage());
     }
 
     @Test
-    void markLessonCompletedThrowsWhenRequiredExercisesWereNotAttempted() {
+    void maybeCompleteLessonAfterCorrectExerciseDoesNothingWhenLessonHasNoExercises() {
         User user = createUser(1L, EMAIL);
         Lesson lesson = createLesson(10L, 1);
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
-        when(exerciseRepository.countByLessonId(10L)).thenReturn(4L);
-        when(userExerciseAttemptRepository.countDistinctAttemptedExercisesByUserIdAndLessonId(1L, 10L)).thenReturn(2L);
+        when(exerciseRepository.countByLessonId(10L)).thenReturn(0L);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> lessonProgressService.markLessonCompleted(10L));
+        lessonProgressService.maybeCompleteLessonAfterCorrectExercise(10L);
 
-        assertEquals("Faites au moins 3 exercice(s) avant de marquer cette lecon comme terminee (2/4 faits)",
-                exception.getMessage());
+        verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
+        verify(progressService, never()).syncCourseProgressForUser(any(User.class), any(Course.class));
+    }
+
+    @Test
+    void maybeCompleteLessonAfterCorrectExerciseCompletesWhenAllExercisesAnsweredCorrectly() {
+        User user = createUser(1L, EMAIL);
+        Lesson lesson = createLesson(10L, 1);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
+        when(exerciseRepository.countByLessonId(10L)).thenReturn(2L);
+        when(userExerciseAttemptRepository.countDistinctCorrectExercisesByUserIdAndLessonId(1L, 10L)).thenReturn(2L);
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1L, 10L)).thenReturn(Optional.empty());
+        when(userLessonProgressRepository.save(any(UserLessonProgress.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        lessonProgressService.maybeCompleteLessonAfterCorrectExercise(10L);
+
+        verify(userLessonProgressRepository).save(any(UserLessonProgress.class));
+        verify(progressService).syncCourseProgressForUser(eq(user), eq(lesson.getCourse()));
+    }
+
+    @Test
+    void maybeCompleteLessonAfterCorrectExerciseSkipsWhenSomeExercisesStillMissing() {
+        User user = createUser(1L, EMAIL);
+        Lesson lesson = createLesson(10L, 1);
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(lessonRepository.findById(10L)).thenReturn(Optional.of(lesson));
+        when(exerciseRepository.countByLessonId(10L)).thenReturn(3L);
+        when(userExerciseAttemptRepository.countDistinctCorrectExercisesByUserIdAndLessonId(1L, 10L)).thenReturn(1L);
+
+        lessonProgressService.maybeCompleteLessonAfterCorrectExercise(10L);
+
         verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
     }
 

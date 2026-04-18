@@ -2,6 +2,7 @@ package com.unicodeacademy.backend.repository;
 
 import com.unicodeacademy.backend.model.UserCourseProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,4 +23,15 @@ public interface UserCourseProgressRepository
     Optional<UserCourseProgress> findByUserIdAndCourseId(Long userId, Long courseId);
 
     void deleteByUserId(Long userId);
+
+    @Modifying
+    void deleteByCourse_Id(Long courseId);
+
+    List<UserCourseProgress> findByCourse_Id(Long courseId);
+
+    long countByCourse_Id(Long courseId);
+
+    long countByUserIdAndStatus(Long userId, UserCourseProgress.Status status);
+
+    long countByCourse_IdAndStatus(Long courseId, UserCourseProgress.Status status);
 }

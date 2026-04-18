@@ -9,7 +9,7 @@ const featureItems = [
   "Parcours visuels par langage",
   "Leçons + console intégrée en direct",
   "Exercices progressifs pour ancrer les bases",
-  "Classement hebdomadaire et progression continue",
+  "Classement global et progression continue",
 ] as const;
 
 const onboardingHighlights = [
